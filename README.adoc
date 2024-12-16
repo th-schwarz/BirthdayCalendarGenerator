@@ -56,3 +56,32 @@ dav:
   cal-url: https://dav.my-domain.org/SOGo/dav/dav-user/Calendar/46-12345678-5-87654321/
   card-url: https://dav.my-domain.org/SOGo/dav/dav-user/Contacts/personal/
 ----
+
+
+== Start
+
+The fully executable jar can be executed in different ways.
+
+=== by Command Line
+
+The start by command line looks like:
+
+[source,bash]
+----
+cd /opt/bcg/
+java -jar bcg.jar --logging.config=logback.xml
+----
+
+=== by systemd Service
+
+BCG can also be started easily as a systemd service. An example for
+the desired service configuration can be found at the documentation
+link:docs/systemd-configuration.adoc[systemd
+Service Configuration].
+
+=== by init.d Service
+
+Another possibility to start BCG is as `init.d` service. Further
+information can be found at the documentation of spring boot,
+https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#deployment.installing.nix-services.init-d[Installation
+as an init.d Service (System V)].
