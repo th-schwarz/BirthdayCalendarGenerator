@@ -22,6 +22,10 @@ import net.fortuna.ical4j.vcard.property.N;
 import org.apache.commons.io.IOUtils;
 import org.springframework.stereotype.Component;
 
+/**
+ * Handles operations related to the DAV address book, including fetching and processing contact
+ * information such as people with birthdays.
+ */
 @Slf4j
 @Component
 public class CardHandler {
@@ -32,6 +36,13 @@ public class CardHandler {
   private final DavConf davConf;
   private final Sardine sardine;
 
+  /**
+   * Constructs a new CardHandler instance to manage operations related to DAV address book
+   * services.
+   *
+   * @param davConf The configuration object containing the credentials and URLs required for DAV
+   *     integration, such as user, password, and the address book URL.
+   */
   public CardHandler(DavConf davConf) {
     this.sardine = SardineFactory.begin(davConf.user(), davConf.password());
     this.davConf = davConf;
@@ -48,20 +59,20 @@ public class CardHandler {
           continue;
         }
         log.info("Contact - display name: {}", contact.getDisplayName());
-        URI hRef = new URI(davConf.getBaseUrl() + contact.getHref().toString());
-        try (InputStream vCardStream = sardine.get(hRef.toString())) {
+        URI href = new URI(davConf.getBaseUrl() + contact.getHref().toString());
+        try (InputStream vCardStream = sardine.get(href.toString())) {
           String vcfContent = IOUtils.toString(vCardStream, StandardCharsets.UTF_8);
           VCardBuilder cardBuilder =
               new VCardBuilder(
                   new ByteArrayInputStream(vcfContent.getBytes(StandardCharsets.UTF_8)));
-          VCard vCard = cardBuilder.build();
-          BDay birthday = vCard.getProperty(net.fortuna.ical4j.vcard.Property.Id.BDAY);
+          VCard card = cardBuilder.build();
+          BDay birthday = card.getProperty(net.fortuna.ical4j.vcard.Property.Id.BDAY);
           if (birthday == null) {
             log.debug("No birthday found for {}", contact.getDisplayName());
             continue;
           }
-          Fn displayName = vCard.getProperty(net.fortuna.ical4j.vcard.Property.Id.FN);
-          N name = vCard.getProperty(net.fortuna.ical4j.vcard.Property.Id.N);
+          Fn displayName = card.getProperty(net.fortuna.ical4j.vcard.Property.Id.FN);
+          N name = card.getProperty(net.fortuna.ical4j.vcard.Property.Id.N);
           String firstName = name.getGivenName();
           String lastName = name.getFamilyName();
           people.add(

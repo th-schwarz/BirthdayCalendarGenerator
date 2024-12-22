@@ -1,6 +1,6 @@
 package codes.thischwa.bcg.service;
 
-import codes.thischwa.bcg.conf.BCGConf;
+import codes.thischwa.bcg.conf.BcgConf;
 import codes.thischwa.bcg.conf.DavConf;
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,8 +15,8 @@ import org.springframework.stereotype.Service;
 /**
  * Service for configuring and managing VdirSyncer.
  *
- * This service ensures that the necessary configurations and directories for VdirSyncer
- * are in place and handles creating the configuration file if it doesn't exist.
+ * <p>This service ensures that the necessary configurations and directories for VdirSyncer are in
+ * place and handles creating the configuration file if it doesn't exist.
  */
 @Slf4j
 @Service
@@ -24,12 +24,12 @@ public class VdirSyncerConfigurationService {
 
   private final DavConf davConf;
 
-  private final BCGConf bcgConf;
+  private final BcgConf bcgConf;
 
   private final VdirSyncerCaller vdirSyncerCaller;
 
   public VdirSyncerConfigurationService(
-      DavConf davConf, BCGConf bcgConf, VdirSyncerCaller vdirSyncerCaller) {
+          DavConf davConf, BcgConf bcgConf, VdirSyncerCaller vdirSyncerCaller) {
     this.davConf = davConf;
     this.bcgConf = bcgConf;
     this.vdirSyncerCaller = vdirSyncerCaller;

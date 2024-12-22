@@ -8,23 +8,39 @@ import java.nio.file.Paths;
 import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.lang.Nullable;
 
 public class ProcessBuilderWrapper {
 
   private final String[] command;
   private final ByteArrayOutputStream outStd = new ByteArrayOutputStream();
   private final ByteArrayOutputStream outError = new ByteArrayOutputStream();
-  private File workingDirectory;
+  @Nullable private File workingDirectory;
   // exit value of the process
   @Getter private int status;
   private boolean redirectToStdout;
   private boolean redirectErrorStream;
-  // environment variables, that are visible to the process
-  @Setter private Map<String, String> environment = null;
+  @Setter @Nullable private Map<String, String> environment = null;
 
   public ProcessBuilderWrapper(String... command) {
     this.command = command;
   }
+
+//  public static void main(String[] args) throws IOException {
+//    String systemPath = System.getenv("PATH");
+//    //        System.out.println(systemPath);
+//
+//    ProcessBuilderWrapper pb = new ProcessBuilderWrapper("vdirsyncer", "--version");
+//    pb.setEnvironment(Map.of("PATH", systemPath));
+//    pb.run();
+//    System.out.println("status: " + pb.getStatus());
+//    if (pb.hasOutput()) {
+//      System.out.println("Output: " + pb.getOutput());
+//    }
+//    if (pb.hasErrors()) {
+//      System.out.println("error: " + pb.getError());
+//    }
+//  }
 
   /**
    * Executes a command using {@link ProcessBuilder} and handles the process streams.
@@ -33,8 +49,12 @@ public class ProcessBuilderWrapper {
    */
   public void run() throws IOException {
     ProcessBuilder pb = new ProcessBuilder(command);
-    if (workingDirectory != null) pb.directory(workingDirectory);
-    if (environment != null && !environment.isEmpty()) pb.environment().putAll(environment);
+    if (workingDirectory != null) {
+      pb.directory(workingDirectory);
+    }
+    if (environment != null && !environment.isEmpty()) {
+      pb.environment().putAll(environment);
+    }
 
     pb.redirectErrorStream(redirectErrorStream);
 
@@ -80,21 +100,5 @@ public class ProcessBuilderWrapper {
 
   public boolean hasOutput() {
     return !getOutput().isEmpty() && !getOutput().equals("n/a");
-  }
-
-  public static void main(String[] args) throws IOException {
-    String systemPath = System.getenv("PATH");
-    //        System.out.println(systemPath);
-
-    ProcessBuilderWrapper pb = new ProcessBuilderWrapper("vdirsyncer", "--version");
-    pb.setEnvironment(Map.of("PATH", systemPath));
-    pb.run();
-    System.out.println("status: " + pb.getStatus());
-    if (pb.hasOutput()) {
-      System.out.println("Output: " + pb.getOutput());
-    }
-    if (pb.hasErrors()) {
-      System.out.println("error: " + pb.getError());
-    }
   }
 }

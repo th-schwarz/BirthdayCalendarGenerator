@@ -1,9 +1,10 @@
 package codes.thischwa.bcg;
 
-import codes.thischwa.bcg.conf.BCGConf;
+import codes.thischwa.bcg.conf.BcgConf;
 import codes.thischwa.bcg.conf.DavConf;
 import codes.thischwa.bcg.service.BirthdayCalGenerator;
 import codes.thischwa.bcg.service.VdirSyncerConfigurationService;
+import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
@@ -12,15 +13,13 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-import java.io.IOException;
-
 /** The ApplicationStartup class processes some tasks if the application is ready to start. */
 @Component
 @Profile("!test")
 @Slf4j
 public class ApplicationStartup implements ApplicationListener<ApplicationReadyEvent> {
 
-  private final BCGConf config;
+  private final BcgConf config;
 
   private final DavConf davConf;
 
@@ -30,18 +29,17 @@ public class ApplicationStartup implements ApplicationListener<ApplicationReadyE
 
   private final VdirSyncerConfigurationService vdirSyncerConfigurationService;
 
-    /**
-   * Initializes the application on startup.
-     */
+  /** Initializes the application on startup. */
   public ApplicationStartup(
-          BCGConf config,
-          DavConf davConf, BirthdayCalGenerator birthdayCalGenerator,
-          Environment env,
-          VdirSyncerConfigurationService vdirSyncerConfigurationService) {
+      BcgConf config,
+      DavConf davConf,
+      BirthdayCalGenerator birthdayCalGenerator,
+      Environment env,
+      VdirSyncerConfigurationService vdirSyncerConfigurationService) {
     this.config = config;
     this.davConf = davConf;
-      this.birthdayCalGenerator = birthdayCalGenerator;
-      this.env = env;
+    this.birthdayCalGenerator = birthdayCalGenerator;
+    this.env = env;
     this.vdirSyncerConfigurationService = vdirSyncerConfigurationService;
   }
 
@@ -56,20 +54,20 @@ public class ApplicationStartup implements ApplicationListener<ApplicationReadyE
     log.info("  * cal-dav-url: {}", davConf.calUrl());
     log.info("  * user: {}", davConf.user());
 
-      try {
-          vdirSyncerConfigurationService.checkConfig();
-      } catch (IOException e) {
-          throw new RuntimeException(e);
-      }
+    try {
+      vdirSyncerConfigurationService.checkConfig();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
 
-      if (config.runOnStart()) {
-        try {
-            log.info("Processing on start ...");
-            birthdayCalGenerator.processBirthdayCal();
-            log.info("Processed on start successfully.");
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+    if (config.runOnStart()) {
+      try {
+        log.info("Processing on start ...");
+        birthdayCalGenerator.processBirthdayCal();
+        log.info("Processed on start successfully.");
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 }
