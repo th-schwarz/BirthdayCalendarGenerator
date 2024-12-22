@@ -39,6 +39,14 @@ event:
 - `bcg.clean-config-file`: If this file exists all the generated configuration and setup will be recreated.
 - `bcg.run-on-start`: The creation of the birthday calendar will be triggered directly at the start of the service.
 
+Event settings:
+
+- `event.summary`: The summary of the event.
+- `event.description`: The description of the event.
+- `event.date-format`: The format of the placeholder _\~birthday~_.
+
+There are several placeholders which can be used in some event properties. The names speak for themselves.
+
 === Individual settings
 
 [source,yaml]
