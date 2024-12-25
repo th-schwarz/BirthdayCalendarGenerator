@@ -54,7 +54,6 @@ There are several placeholders which can be used in some event properties. The n
 dav:
   user: dev
   password: strong
-  dav-path: SOGo/dav
   cal-url: https://dav.my-domain.org/SOGo/dav/dav-user/Calendar/46-12345678-5-87654321/
   card-url: https://dav.my-domain.org/SOGo/dav/dav-user/Contacts/personal/
 ----
