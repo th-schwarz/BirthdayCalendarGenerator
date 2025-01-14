@@ -3,8 +3,6 @@ package codes.thischwa.bcg;
 import codes.thischwa.bcg.conf.BcgConf;
 import codes.thischwa.bcg.conf.DavConf;
 import codes.thischwa.bcg.service.BirthdayCalGenerator;
-import codes.thischwa.bcg.service.VdirSyncerConfigurationService;
-import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
@@ -27,20 +25,13 @@ public class ApplicationStartup implements ApplicationListener<ApplicationReadyE
 
   private final Environment env;
 
-  private final VdirSyncerConfigurationService vdirSyncerConfigurationService;
-
   /** Initializes the application on startup. */
   public ApplicationStartup(
-      BcgConf config,
-      DavConf davConf,
-      BirthdayCalGenerator birthdayCalGenerator,
-      Environment env,
-      VdirSyncerConfigurationService vdirSyncerConfigurationService) {
+      BcgConf config, DavConf davConf, BirthdayCalGenerator birthdayCalGenerator, Environment env) {
     this.config = config;
     this.davConf = davConf;
     this.birthdayCalGenerator = birthdayCalGenerator;
     this.env = env;
-    this.vdirSyncerConfigurationService = vdirSyncerConfigurationService;
   }
 
   @Override
@@ -54,16 +45,10 @@ public class ApplicationStartup implements ApplicationListener<ApplicationReadyE
     log.info("  * cal-dav-url: {}", davConf.calUrl());
     log.info("  * user: {}", davConf.user());
 
-    try {
-      vdirSyncerConfigurationService.checkConfig();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-
     if (config.runOnStart()) {
       try {
         log.info("Processing on start ...");
-        birthdayCalGenerator.processBirthdayCal();
+        birthdayCalGenerator.processBirthdayEvents();
         log.info("Processed on start successfully.");
       } catch (Exception e) {
         throw new RuntimeException(e);

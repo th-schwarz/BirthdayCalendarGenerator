@@ -18,10 +18,6 @@ Below all default settings are listed.
 bcg:
   product: BirthdayCalendarGenerator
   calendar-category: Birthday
-  calendar-dir: cal
-  vdirsyncer-config: vdirsyncer.config
-  vdirsyncer-status-dir: vdirsyncer-status
-  clean-config-file: clean
   run-on-start: true
   cron: "0 30 4 * * SUN"
 
@@ -31,12 +27,8 @@ event:
   date-format: yyyy-MM-dd
 ----
 
-- `bcg.product`: Name of the product used in the created calendar files.
+- `bcg.product`: Name of the product used in the created calendar files, known as 'prodId'.
 - `bcg.calendar-category`: The category of the birthday event.
-- `bcg.calendar-dir`: The directory store the files of the birthday event.
-- `bdg.vdirsyncer-config`: The config file of _vdirsyncer_.
-- `bcg.vdirsyncer-status-dir`: The status directory of _vdirsyncer_.
-- `bcg.clean-config-file`: If this file exists all the generated configuration and setup will be recreated.
 - `bcg.run-on-start`: The creation of the birthday calendar will be triggered directly at the start of the service.
 
 Event settings:
@@ -47,7 +39,7 @@ Event settings:
 
 There are several placeholders which can be used in some event properties. The names speak for themselves.
 
-=== Individual settings
+== Individual settings
 
 [source,yaml]
 ----

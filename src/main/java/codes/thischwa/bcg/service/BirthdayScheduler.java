@@ -11,8 +11,8 @@ import org.springframework.stereotype.Service;
  * Service class that schedules the generation of the birthday calendar.
  *
  * <p>The main task performed by this service is to call the {@link
- * BirthdayCalGenerator#processBirthdayCal()} method, which handles the generation and upload of the
- * birthday calendar.
+ * BirthdayCalGenerator#processBirthdayEvents()} method, which handles the generation and upload of
+ * the birthday calendar.
  */
 @Service
 @EnableScheduling
@@ -45,7 +45,7 @@ public class BirthdayScheduler {
   @Scheduled(cron = "${bcg.cron}")
   public void process() throws IOException {
     log.info("Processing birthday calendar ...");
-    birthdayCalGenerator.processBirthdayCal();
+    birthdayCalGenerator.processBirthdayEvents();
     log.info("Processed birthday successfully.");
   }
 }

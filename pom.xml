@@ -4,14 +4,14 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.0</version>
+        <version>3.4.1</version>
         <relativePath /> <!-- lookup parent from repository -->
     </parent>
     <packaging>jar</packaging>
 
     <groupId>codes.thischwa</groupId>
     <artifactId>bcg</artifactId>
-    <version>0.1.1-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
 
     <name>Birthday Calendar Generator</name>
 
@@ -32,9 +32,9 @@
         <project.build.sourceEncoding>${file.encoding}</project.build.sourceEncoding>
         <project.reporting.outputEncoding>${file.encoding}</project.reporting.outputEncoding>
 
-        <ical4j.version>4.0.5</ical4j.version>
-        <ical4j-vcard.version>1.0.7</ical4j-vcard.version>
-        <sardine.version>5.12</sardine.version>
+        <ical4j.version>4.0.8</ical4j.version>
+        <ical4j-vcard.version>2.0.1</ical4j-vcard.version>
+        <sardine.version>5.13</sardine.version>
     </properties>
 
     <dependencies>

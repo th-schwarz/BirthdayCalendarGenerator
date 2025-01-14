@@ -25,9 +25,6 @@ I’m not responsible for any data loss, hardware damage or broken keyboards. Th
 
 == Setup & Configuration
 
-Currently, the handling of the calendar is done by the great commandline program https://github.com/pimutils/vdirsyncer[vdirsyncer]. It must be installed on your system. +
-It is planned to implement this in java, help is welcome!!!
-
 === File Structure
 
 Here is the suggested file structure:
@@ -56,7 +53,6 @@ dav:
   cal-url: https://dav.my-domain.org/SOGo/dav/dav-user/Calendar/46-12345678-5-87654321/
   card-url: https://dav.my-domain.org/SOGo/dav/dav-user/Contacts/personal/
 ----
-
 
 == Start
 

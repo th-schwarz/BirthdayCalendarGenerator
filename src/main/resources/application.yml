@@ -6,10 +6,6 @@ spring:
 bcg:
   product: BirthdayCalendarGenerator
   calendar-category: Birthday
-  calendar-dir: cal
-  vdirsyncer-config: vdirsyncer.config
-  vdirsyncer-status-dir: vdirsyncer-status
-  clean-config-file: clean
   run-on-start: true
   cron: "0 30 4 * * SUN"
 

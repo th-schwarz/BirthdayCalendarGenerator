@@ -8,12 +8,14 @@ import com.github.sardine.SardineFactory;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
+import net.fortuna.ical4j.model.Property;
+import net.fortuna.ical4j.model.PropertyList;
 import net.fortuna.ical4j.vcard.VCard;
 import net.fortuna.ical4j.vcard.VCardBuilder;
 import net.fortuna.ical4j.vcard.property.BDay;
@@ -58,34 +60,45 @@ public class CardHandler {
         if (contact.isDirectory()) {
           continue;
         }
-        log.info("Contact - display name: {}", contact.getDisplayName());
+        log.info("Processing contact: {}", contact.getDisplayName());
         URI href = new URI(davConf.getBaseUrl() + contact.getHref().toString());
         try (InputStream vCardStream = sardine.get(href.toString())) {
-          String vcfContent = IOUtils.toString(vCardStream, StandardCharsets.UTF_8);
-          VCardBuilder cardBuilder =
-              new VCardBuilder(
-                  new ByteArrayInputStream(vcfContent.getBytes(StandardCharsets.UTF_8)));
+          byte[] vcfContent = IOUtils.toByteArray(vCardStream);
+          VCardBuilder cardBuilder = new VCardBuilder(new ByteArrayInputStream(vcfContent));
           VCard card = cardBuilder.build();
-          BDay birthday = card.getProperty(net.fortuna.ical4j.vcard.Property.Id.BDAY);
-          if (birthday == null) {
-            log.debug("No birthday found for {}", contact.getDisplayName());
-            continue;
-          }
-          Fn displayName = card.getProperty(net.fortuna.ical4j.vcard.Property.Id.FN);
-          N name = card.getProperty(net.fortuna.ical4j.vcard.Property.Id.N);
-          String firstName = name.getGivenName();
-          String lastName = name.getFamilyName();
+          PropertyList propertyList = card.getEntities().get(0).getPropertyList();
+          Optional<BDay> optBday = propertyList.getFirst(BDay.class.getSimpleName());
+          BDay birthday =
+              optBday.orElseThrow(() -> new IllegalArgumentException("Missing birthday"));
+
+          Optional<Fn> optFn = propertyList.getFirst(Fn.class.getSimpleName());
+          Optional<N> optName = propertyList.getFirst(N.class.getSimpleName());
+
+          String displayName = optFn.isPresent() ? optFn.get().getValue() : "";
+          N fullName = optName.orElseThrow(() -> new IllegalArgumentException("Missing name"));
+
+          String firstName = fullName.getGivenName();
+          String lastName = fullName.getFamilyName();
           people.add(
               new Person(
                   firstName,
                   lastName,
-                  displayName.getValue(),
+                  displayName,
                   LocalDate.parse(birthday.getValue(), birthdayFormatter)));
+        } catch (IllegalArgumentException e) {
+          log.warn(
+              "Error while processing contact {}: {}", contact.getDisplayName(), e.getMessage());
         }
       }
       return people;
     } catch (Exception e) {
       throw new IllegalArgumentException(e);
     }
+  }
+
+  private <T extends Property> T getRequiredProperty(PropertyList propertyList, Class<T> propertyClass, String errorMessage) {
+    return propertyList.getFirst(propertyClass.getSimpleName())
+            .map(propertyClass::cast)
+            .orElseThrow(() -> new IllegalArgumentException(errorMessage));
   }
 }

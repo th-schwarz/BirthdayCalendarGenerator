@@ -24,20 +24,4 @@ public record DavConf(
         .build()
         .toUriString();
   }
-
-  /**
-   * Extracts and returns the trailing path segment of the calendar URL.
-   * If the URL ends with a forward slash, the trailing slash is removed first.
-   * It then identifies the last segment of the URL after the final forward slash.
-   *
-   * @return The last segment of the calendar URL, representing the calendar path.
-   */
-  public String getCalendarPath() {
-    String path = calUrl.endsWith("/") ? calUrl.substring(0, calUrl.length() - 1) : calUrl;
-    int idx = path.lastIndexOf('/');
-    if (idx > 0) {
-      path = path.substring(idx + 1);
-    }
-    return path;
-  }
 }

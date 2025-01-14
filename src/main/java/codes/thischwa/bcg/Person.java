@@ -7,8 +7,12 @@ import java.time.LocalDate;
  *
  * @param firstName The person's first name.
  * @param lastName The person's last name.
- * @param displayName A display name for the person, which can be a nickname
- * or any alternative representation of their name.
+ * @param displayName A display name for the person, which can be a nickname or any alternative
+ *     representation of their name.
  * @param birthday The person's date of birth.
  */
-public record Person(String firstName, String lastName, String displayName, LocalDate birthday) {}
+public record Person(String firstName, String lastName, String displayName, LocalDate birthday) {
+  public String getFullName() {
+    return String.format("%s %s", firstName, lastName);
+  }
+}

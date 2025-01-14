@@ -1,10 +1,6 @@
-
 bcg:
   product: BirthdayCalendarGenerator
   calendar-category: Birthday
-  calendar-dir: cal
-  vdirsyncer-config: vdirsyncer.config
-  vdirsyncer-status-dir: vdirsyncer-status
   cron: "0 30 4 * * SUN"
   run-on-start: false
 
