@@ -10,18 +10,23 @@ image::https://github.com/th-schwarz/BCG/actions/workflows/maven.yml/badge.svg["
 
 == Preface
 
-A few years ago, I set up my own groupware server with SOGO because I wanted to host my private data myself. My calendar and address data were previously hosted by Google. When I switched to SOGO, I quickly realized that I was missing a small but very important function: the birthday calendar! +
+A few years ago, I set up my own groupware server with SOGO because I wanted to host my private data myself. It uses standard protocols such as CalDAV and CardDAV. My calendar and address data was previously hosted by Google. When I switched to SOGO, I quickly realized that I was missing a small but very important function: the birthday calendar! +
 BCG (Birthday Calendar Generator) is a Java Spring Boot application for creating a birthday calendar from address book data. It's based on spring boot 3, that’s why Java 17 or later is required! It  can be executed by `commandline`, `init.d` or `systemd`.
 
 At the moment BCG is not acting very intelligent, i.e. the events in the birthday calendar are always deleted and then recreated.
 
 If you find a bug or certain features are missing, don’t hesitate to file an issue on https://github.com/th-schwarz/BCG/issues[Github].
 
-Project state is BETA!
-
 == Disclaimer
 
 I’m not responsible for any data loss, hardware damage or broken keyboards. This guide comes without any warranty!
+
+== Testers wanted!
+
+The author is looking for testers to test BCG on various groupware platforms. +
+Successfully tested so far:
+
+- sogo 5.1.12 (mailcow-dockerized 2024-11b)
 
 == Setup & Configuration
 
@@ -33,8 +38,8 @@ Here is the suggested file structure:
 ----
 ├── /opt/bcg
 │   ├── bcg.yml    (individual configuration)
-│   ├── bcg-0.1.0.jar
-│   ├── bcg.jar -> bcg-0.1.0.jar
+│   ├── bcg-1.0.0.jar
+│   ├── bcg.jar -> bcg-1.0.0.jar
 │   ├── logback.xml    (logback configuration)
 ----
 *bcg.yml* defines the individual properties. The file is read by default and will be merged with the default properties in the classpath, therefore the file can be kept as small as possible. A minimal configuration example can be found further below. If the file is inside the working directory, it is loaded automatically.  +
