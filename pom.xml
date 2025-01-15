@@ -35,6 +35,18 @@
         <ical4j.version>4.0.8</ical4j.version>
         <ical4j-vcard.version>2.0.1</ical4j-vcard.version>
         <sardine.version>5.13</sardine.version>
+
+        <!-- checkstyle -->
+        <checkstyle.version>10.8.1</checkstyle.version>
+        <checkstyle.plugin.version>3.3.1</checkstyle.plugin.version>
+        <checkstyle.config.location>google_checks.xml</checkstyle.config.location>
+        <checkstyle.includeTestResources>false</checkstyle.includeTestResources>
+        <checkstyle.violationSeverity>warning</checkstyle.violationSeverity>
+        <checkstyle.failOnViolation>false</checkstyle.failOnViolation>
+        <checkstyle.propertyExpansion>config_loc=${basedir}
+        </checkstyle.propertyExpansion>
+        <checkstyle.consoleOutput>true</checkstyle.consoleOutput>
+        <linkXRef>false</linkXRef>
     </properties>
 
     <dependencies>
@@ -108,6 +120,45 @@
                         </exclude>
                     </excludes>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <configuration>
+                    <tagNameFormat>v@{project.version}</tagNameFormat>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <!-- deploy isn't desired, currently no repo available -->
+                <artifactId>maven-deploy-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <!-- checkstyle -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>${checkstyle.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>checkstyle-validate</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.puppycrawl.tools</groupId>
+                        <artifactId>checkstyle</artifactId>
+                        <version>${checkstyle.version}</version>
+                    </dependency>
+                </dependencies>
             </plugin>
         </plugins>
     </build>
