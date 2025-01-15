@@ -16,6 +16,12 @@ import org.springframework.web.util.UriComponentsBuilder;
 public record DavConf(
         String user, String password, String calUrl, String cardUrl) {
 
+  /**
+   * Retrieves the base URL derived from the `cardUrl` property. It removes any path, query,
+   * or fragment components from the URL.
+   *
+   * @return The base URL as a String.
+   */
   public String getBaseUrl() {
     return UriComponentsBuilder.fromUriString(cardUrl)
         .replacePath(null)

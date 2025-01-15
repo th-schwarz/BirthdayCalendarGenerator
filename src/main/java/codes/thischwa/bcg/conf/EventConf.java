@@ -20,18 +20,20 @@ public record EventConf(String summary, String description, String dateFormat) {
    * with the person's details.
    *
    * @param person The person whose details will be used to populate the summary template.
-   * @return A string containing the generated summary with placeholders replaced by the person's details.
+   * @return A string containing the generated summary with placeholders replaced by the person's
+   *     details.
    */
   public String generateSummary(Person person) {
     return replace(summary, person);
   }
 
   /**
-   * Generates a description for the specified person by replacing placeholders
-   * in the description template with the person's details.
+   * Generates a description for the specified person by replacing placeholders in the description
+   * template with the person's details.
    *
    * @param person The person whose details will be used to populate the description template.
-   * @return A string containing the generated description with placeholders replaced by the person's details.
+   * @return A string containing the generated description with placeholders replaced by the
+   *     person's details.
    */
   public String generateDescription(Person person) {
     return replace(description, person);

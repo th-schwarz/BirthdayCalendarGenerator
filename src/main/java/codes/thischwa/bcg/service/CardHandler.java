@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
-import net.fortuna.ical4j.model.Property;
 import net.fortuna.ical4j.model.PropertyList;
 import net.fortuna.ical4j.vcard.VCard;
 import net.fortuna.ical4j.vcard.VCardBuilder;
@@ -94,11 +93,5 @@ public class CardHandler {
     } catch (Exception e) {
       throw new IllegalArgumentException(e);
     }
-  }
-
-  private <T extends Property> T getRequiredProperty(PropertyList propertyList, Class<T> propertyClass, String errorMessage) {
-    return propertyList.getFirst(propertyClass.getSimpleName())
-            .map(propertyClass::cast)
-            .orElseThrow(() -> new IllegalArgumentException(errorMessage));
   }
 }
