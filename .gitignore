@@ -1,0 +1,13 @@
+/.settings/
+/target/
+/.classpath
+/.project
+/.factorypath
+/.springBeans
+/.idea
+
+# local files
+/info.txt
+bcg.yml
+/vdirsyncer**
+/cal

@@ -1,0 +1,15 @@
+## import of the individual configuration settings
+spring:
+  config:
+    import: optional:file:./bcg.yml
+
+bcg:
+  product: BirthdayCalendarGenerator
+  calendar-category: Birthday
+  run-on-start: true
+  cron: "0 30 4 * * SUN"
+
+event:
+  summary: "🎂 ~first-name~ ~last-name~"
+  description: "Birthday: ~birthday~"
+  date-format: yyyy-MM-dd

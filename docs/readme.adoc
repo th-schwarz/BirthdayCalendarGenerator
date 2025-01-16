@@ -1,0 +1,6 @@
+
+= Additional Documentation of BCG
+
+* link:bcg-configuration.adoc[Complete BCG Configuration]
+
+* link:systemd-configuration.adoc[Example of a systemd Configuration]

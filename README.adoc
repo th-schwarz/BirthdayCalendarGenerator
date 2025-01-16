@@ -1,0 +1,93 @@
+:toc:
+:toclevels: 3
+:toc-title:
+:source-highlighter: highlightjs
+:highlightjs-languages: yaml,console
+
+= BCG :: Birthday Calendar Generator
+
+image:https://github.com/th-schwarz/BCG/actions/workflows/maven.yml/badge.svg["GitHub CI Build Status",link="https://github.com/th-schwarz/BCG/actions/workflows/maven.yml"]
+image:https://img.shields.io/github/license/th-schwarz/BCG["License badge for BCG",link="https://github.com/th-schwarz/BCG/blob/develop/LICENSE"]
+
+Give it a try!
+https://github.com/th-schwarz/BCG/releases[image:https://img.shields.io/github/v/release/th-schwarz/BCG?include_prereleases[GitHub
+release (latest by date including pre-releases)]]
+
+== Preface
+
+A few years ago, I set up my own groupware server with SOGO because I wanted to host my private data myself. It uses standard protocols such as CalDAV and CardDAV. My calendar and address data was previously hosted by Google. When I switched to SOGO, I quickly realized that I was missing a small but very important function: the birthday calendar! +
+BCG (Birthday Calendar Generator) is a Java Spring Boot application for creating a birthday calendar from address book data. It's based on spring boot 3, that’s why Java 17 or later is required! It  can be executed by `commandline`, `init.d` or `systemd`.
+
+At the moment BCG is not acting very intelligent, i.e. the events in the birthday calendar are always deleted and then recreated.
+
+If you find a bug or certain features are missing, don’t hesitate to file an issue on https://github.com/th-schwarz/BCG/issues[Github].
+
+== Disclaimer
+
+I’m not responsible for any data loss, hardware damage or broken keyboards. This guide comes without any warranty!
+
+== Testers wanted!
+
+The author is looking for testers to test BCG on various groupware platforms. +
+Successfully tested so far:
+
+- sogo 5.1.12 (mailcow-dockerized 2024-11b)
+
+== Setup & Configuration
+
+=== File Structure
+
+Here is the suggested file structure:
+
+[source,bash]
+----
+├── /opt/bcg
+│   ├── bcg.yml    (individual configuration)
+│   ├── bcg-1.0.0.jar
+│   ├── bcg.jar -> bcg-1.0.0.jar
+│   ├── logback.xml    (logback configuration)
+----
+*bcg.yml* defines the individual properties. The file is read by default and will be merged with the default properties in the classpath, therefore the file can be kept as small as possible. A minimal configuration example can be found further below. If the file is inside the working directory, it is loaded automatically.  +
+The complete configuration settings can be found link:docs/bcg-configuration.adoc[here].
+
+=== Minimal configuration example
+
+The most mandatory individual configuration concerns the dav setting. These should be self-explanatory. An example for your individual properties file `bcg.yml`:
+
+[source,yaml]
+----
+dav:
+  user: dev
+  password: strong
+  dav-path: SOGo/dav
+  cal-url: https://dav.my-domain.org/SOGo/dav/dav-user/Calendar/46-12345678-5-87654321/
+  card-url: https://dav.my-domain.org/SOGo/dav/dav-user/Contacts/personal/
+----
+
+== Start
+
+The fully executable jar can be executed in different ways.
+
+=== by Command Line
+
+The start by command line looks like:
+
+[source,bash]
+----
+cd /opt/bcg/
+java -jar bcg.jar --logging.config=logback.xml
+----
+
+=== by systemd Service
+
+BCG can also be started easily as a systemd service. An example for
+the desired service configuration can be found at the documentation
+link:docs/systemd-configuration.adoc[systemd
+Service Configuration].
+
+=== by init.d Service
+
+Another possibility to start BCG is as `init.d` service. Further
+information can be found at the documentation of spring boot,
+https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#deployment.installing.nix-services.init-d[Installation
+as an init.d Service (System V)].

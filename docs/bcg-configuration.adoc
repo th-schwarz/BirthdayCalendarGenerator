@@ -1,0 +1,51 @@
+:source-highlighter: highlightjs
+:highlightjs-languages: yaml
+:toc:
+:toc-title:
+
+= BCG Configuration
+
+== Default settings
+
+BCG has a lot of configuration settings. Most of them has default settings, but they can be overwritten by the individual configuration file.
+
+Below all default settings are listed.
+
+[source,yaml]
+// include is disabled on github
+// application.yml 2024-11
+----
+bcg:
+  product: BirthdayCalendarGenerator
+  calendar-category: Birthday
+  run-on-start: true
+  cron: "0 30 4 * * SUN"
+
+event:
+  summary: "🎂 ~first-name~ ~last-name~"
+  description: "Birthday: ~birthday~"
+  date-format: yyyy-MM-dd
+----
+
+- `bcg.product`: Name of the product used in the created calendar files, known as 'prodId'.
+- `bcg.calendar-category`: The category of the birthday event.
+- `bcg.run-on-start`: The creation of the birthday calendar will be triggered directly at the start of the service.
+
+Event settings:
+
+- `event.summary`: The summary of the event.
+- `event.description`: The description of the event.
+- `event.date-format`: The format of the placeholder _\~birthday~_.
+
+There are several placeholders which can be used in some event properties. The names speak for themselves.
+
+== Individual settings
+
+[source,yaml]
+----
+dav:
+  user: dev
+  password: strong
+  cal-url: https://dav.my-domain.org/SOGo/dav/dav-user/Calendar/46-12345678-5-87654321/
+  card-url: https://dav.my-domain.org/SOGo/dav/dav-user/Contacts/personal/
+----

@@ -1,0 +1,45 @@
+:source-highlighter: highlightjs
+:highlightjs-languages: console
+
+= systemd Service Configuration
+
+== Example Configuration
+
+[source,console]
+----
+[Unit]
+Description=BCG - Birthday Calendar Generator
+After=network.target
+
+[Service]
+User=bcg
+Group=bcg
+
+Environment="TZ=Europe/Berlin"
+ExecStart=/opt/bcg/bcg.jar
+ExecStop=/bin/kill -15 $MAINPID
+SuccessExitStatus=143
+
+[Install]
+WantedBy=multi-user.target
+----
+
+====
+Don't forget to customize user, group and the path to the jar file!
+====
+
+== Status Output
+
+[source,console]
+----
+● bcg.service - BCG - Birthday Calendar Generator
+     Loaded: loaded (/etc/systemd/system/bcg.service; enabled; preset: enabled)
+     Active: active (running) since Wed 2024-12-11 17:08:03 CET; 5 days ago
+   Main PID: 671 (bcg.jar)
+      Tasks: 26 (limit: 9388)
+     Memory: 205.6M (peak: 273.1M)
+        CPU: 8min 56.537s
+     CGroup: /system.slice/bcg.service
+             ├─671 /bin/bash /opt/bcg/bcg.jar
+             └─797 /usr/bin/java -Dsun.misc.URLClassPath.disableJarChecking=true -jar /opt/bcg/bcg-0.1.0.jar
+----
