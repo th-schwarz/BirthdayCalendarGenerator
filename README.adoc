@@ -65,7 +65,7 @@ dav:
 ----
 
 - `card-url`: The address book URL from which birthdays are read.
-- `cal-url`: The url of the birthday calendar which must be created. _It is absolutely necessary to use an extra calendar, as all events are currently being deleted and recreated!_
+- `cal-url`: The url of the birthday calendar which must be created. _It is absolutely necessary to use an extra birthday calendar, as all events are currently being deleted and recreated!_
 
 == Start
 
