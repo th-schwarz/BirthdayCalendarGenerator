@@ -15,11 +15,15 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
+import net.fortuna.ical4j.data.CalendarBuilder;
+import net.fortuna.ical4j.data.ParserException;
 import net.fortuna.ical4j.model.Calendar;
 import net.fortuna.ical4j.model.Month;
 import net.fortuna.ical4j.model.Recur;
+import net.fortuna.ical4j.model.component.CalendarComponent;
 import net.fortuna.ical4j.model.component.VEvent;
 import net.fortuna.ical4j.model.property.Categories;
 import net.fortuna.ical4j.model.property.Description;
@@ -29,8 +33,10 @@ import net.fortuna.ical4j.model.property.RRule;
 import net.fortuna.ical4j.model.property.Transp;
 import net.fortuna.ical4j.model.property.Version;
 import net.fortuna.ical4j.transform.recurrence.Frequency;
+import net.fortuna.ical4j.util.CompatibilityHints;
 import net.fortuna.ical4j.util.RandomUidGenerator;
 import net.fortuna.ical4j.util.UidGenerator;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 /**
@@ -63,6 +69,8 @@ public class CalHandler {
     this.davConf = davConf;
     this.sardine = SardineFactory.begin(davConf.user(), davConf.password());
     this.sardine.enablePreemptiveAuthentication(davConf.getBaseUrl());
+    CompatibilityHints.setHintEnabled(CompatibilityHints.KEY_RELAXED_UNFOLDING, true);
+    CompatibilityHints.setHintEnabled(CompatibilityHints.KEY_RELAXED_VALIDATION, true);
   }
 
   /**
@@ -89,7 +97,14 @@ public class CalHandler {
             "Calendar found: name={}, display-name={}",
             resource.getName(),
             resource.getDisplayName());
-        calendarEntries.add(resource.getHref());
+        VEvent birthdayEvent = convert(resource);
+        if (birthdayEvent != null) {
+          Optional<Categories> optCategories = birthdayEvent.getCategories();
+          if (optCategories.isPresent()
+              && optCategories.get().getCategories().getTexts().contains(conf.calendarCategory())) {
+            calendarEntries.add(resource.getHref());
+          }
+        }
       }
     }
     return calendarEntries;
@@ -101,6 +116,33 @@ public class CalHandler {
       sardine.delete(path);
       log.debug("Successfully deleted {}", path);
     }
+  }
+
+  private @Nullable VEvent convert(DavResource resource) throws IllegalArgumentException {
+    String url = davConf.getBaseUrl() + resource.getHref().getPath();
+    try (InputStream inputStream = sardine.get(url)) {
+      if (inputStream != null) {
+        // Parse the iCalendar content
+        CalendarBuilder builder = new CalendarBuilder();
+        Calendar calendar = builder.build(inputStream);
+        if (calendar.getComponents().size() != 1) {
+          throw new IllegalArgumentException(
+              "Unexpected number of calendar components: "
+                  + calendar.getComponents().size()
+                  + " for URL: "
+                  + url
+                  + " (expected: 1)");
+        }
+
+        CalendarComponent component = calendar.getComponents().get(0);
+        if (component instanceof VEvent) {
+          return (VEvent) component;
+        }
+      }
+    } catch (ParserException | IOException e) {
+      throw new IllegalArgumentException(e);
+    }
+    return null;
   }
 
   void uploadEventsToCalendar(List<Person> people) {
