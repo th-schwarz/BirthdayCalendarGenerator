@@ -64,6 +64,9 @@ dav:
   card-url: https://dav.my-domain.org/SOGo/dav/dav-user/Contacts/personal/
 ----
 
+- `card-url`: The address book URL from which birthdays are read.
+- `cal-url`: The url of the birthday calendar which must be created. _It is absolutely necessary to use an extra calendar, as all events are currently being deleted and recreated!_
+
 == Start
 
 The fully executable jar can be executed in different ways.
