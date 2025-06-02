@@ -11,12 +11,12 @@ image:https://img.shields.io/github/license/th-schwarz/BCG["License badge for BC
 
 Give it a try!
 https://github.com/th-schwarz/BCG/releases[image:https://img.shields.io/github/v/release/th-schwarz/BCG?include_prereleases[GitHub
-release (latest by date including pre-releases)]] +
+release (latest by date including pre-releases)]]         image:https://img.shields.io/github/downloads/th-schwarz/BCG/total[GitHub Downloads (all assets, all releases)] +
 Before testing BCG, please create a backup of the calendar to be used!
 
 == Preface
 
-A few years ago, I set up my own groupware server with SOGO because I wanted to host my private data myself. It uses standard protocols such as CalDAV and CardDAV. My calendar and address data was previously hosted by Google. When I switched to SOGO, I quickly realized that I was missing a small but very important function: the birthday calendar! +
+A few years ago, I set up my own groupware server with SOGO because I wanted to host my private data myself. It uses standard protocols such as CalDAV and CardDAV. Google previously hosted my calendar and address data. When I switched to SOGO, I quickly realized that I was missing a small but crucial function: the birthday calendar! +
 BCG (Birthday Calendar Generator) is a Java Spring Boot application for creating a birthday calendar from address book data. It's based on spring boot 3, that’s why Java 17 or later is required! It  can be executed by `commandline`, `init.d` or `systemd`.
 
 At the moment BCG is not acting very intelligent, i.e. the events in the birthday calendar are always deleted and then recreated.
