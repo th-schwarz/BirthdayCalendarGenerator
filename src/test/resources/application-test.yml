@@ -4,6 +4,11 @@ bcg:
   cron: "0 30 4 * * SUN"
   run-on-start: false
 
+event:
+  summary: "🎂 ~first-name~ ~last-name~"
+  description: "Birthday: ~birthday~"
+  date-format: yyyy-MM-dd
+  alarm: 1d
 
 dav:
   user: dev

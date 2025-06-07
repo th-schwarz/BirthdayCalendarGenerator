@@ -7,9 +7,10 @@ bcg:
   product: BirthdayCalendarGenerator
   calendar-category: Birthday
   run-on-start: true
-  cron: "0 30 4 * * SUN"
+  cron: "0 30 4 * * *"
 
 event:
   summary: "🎂 ~first-name~ ~last-name~"
   description: "Birthday: ~birthday~"
   date-format: yyyy-MM-dd
+  alarm: 1d

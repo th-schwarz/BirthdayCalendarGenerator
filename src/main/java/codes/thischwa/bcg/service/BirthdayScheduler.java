@@ -37,8 +37,7 @@ public class BirthdayScheduler {
    * Scheduled method that triggers the processing of the birthday calendar.
    *
    * <p>This method is executed based on the cron expression defined in the configuration property
-   * `bcg.cron`. It orchestrates the generation of the birthday calendar by delegating the task to
-   * the {@code processBirthdayCal} method of {@code BirthdayCalGenerator}.
+   * `bcg.cron`.
    *
    * @throws IOException if an I/O error occurs during the processing of the birthday calendar.
    */

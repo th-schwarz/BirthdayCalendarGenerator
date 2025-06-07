@@ -66,8 +66,8 @@ public class CardHandler {
           VCardBuilder cardBuilder = new VCardBuilder(new ByteArrayInputStream(vcfContent));
           VCard card = cardBuilder.build();
           PropertyList propertyList = card.getEntities().get(0).getPropertyList();
-          Optional<BDay> optBday = propertyList.getFirst(BDay.class.getSimpleName());
-          BDay birthday =
+          Optional<BDay<LocalDate>> optBday = propertyList.getFirst(BDay.class.getSimpleName());
+          BDay<LocalDate> birthday =
               optBday.orElseThrow(() -> new IllegalArgumentException("Missing birthday"));
 
           Optional<Fn> optFn = propertyList.getFirst(Fn.class.getSimpleName());

@@ -23,18 +23,23 @@ import net.fortuna.ical4j.model.Calendar;
 import net.fortuna.ical4j.model.Month;
 import net.fortuna.ical4j.model.Recur;
 import net.fortuna.ical4j.model.component.CalendarComponent;
+import net.fortuna.ical4j.model.component.VAlarm;
 import net.fortuna.ical4j.model.component.VEvent;
+import net.fortuna.ical4j.model.property.Action;
 import net.fortuna.ical4j.model.property.Categories;
 import net.fortuna.ical4j.model.property.Description;
 import net.fortuna.ical4j.model.property.Method;
 import net.fortuna.ical4j.model.property.ProdId;
 import net.fortuna.ical4j.model.property.RRule;
+import net.fortuna.ical4j.model.property.Summary;
 import net.fortuna.ical4j.model.property.Transp;
+import net.fortuna.ical4j.model.property.Trigger;
 import net.fortuna.ical4j.model.property.Version;
 import net.fortuna.ical4j.transform.recurrence.Frequency;
 import net.fortuna.ical4j.util.CompatibilityHints;
 import net.fortuna.ical4j.util.RandomUidGenerator;
 import net.fortuna.ical4j.util.UidGenerator;
+
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
@@ -58,9 +63,9 @@ public class CalHandler {
   /**
    * Constructor for the CalHandler class.
    *
-   * @param conf The configuration object containing settings for the BCG system.
+   * @param conf      The configuration object containing settings for the BCG system.
    * @param eventConf The configuration object for defining event-related settings.
-   * @param davConf The configuration object containing WebDAV user and password details.
+   * @param davConf   The configuration object containing WebDAV user and password details.
    */
   CalHandler(BcgConf conf, EventConf eventConf, DavConf davConf) {
     this.conf = conf;
@@ -77,7 +82,7 @@ public class CalHandler {
    * DAV server.
    *
    * @throws IOException if there is an error during communication with the DAV server while listing
-   *     or deleting resources.
+   *                     or deleting resources.
    */
   void clearRemoteCalendar() throws IOException {
     Set<URI> calendarEntries = getRemoteEventsToDelete();
@@ -92,9 +97,7 @@ public class CalHandler {
     Set<URI> calendarEntries = new HashSet<>();
     for (DavResource resource : davResources) {
       if (CALENDAR_CONTENT_TYPE.equalsIgnoreCase(resource.getContentType())) {
-        log.debug(
-            "Calendar found: name={}, display-name={}",
-            resource.getName(),
+        log.debug("Calendar found: name={}, display-name={}", resource.getName(),
             resource.getDisplayName());
         VEvent birthdayEvent = convert(resource);
         if (birthdayEvent != null && matchCategory(birthdayEvent)) {
@@ -106,8 +109,7 @@ public class CalHandler {
   }
 
   private boolean matchCategory(VEvent event) {
-    return event
-        .getCategories()
+    return event.getCategories()
         .map(categories -> categories.getCategories().getTexts().contains(conf.calendarCategory()))
         .orElse(false);
   }
@@ -129,11 +131,8 @@ public class CalHandler {
         Calendar calendar = builder.build(inputStream);
         if (calendar.getComponents().size() != 1) {
           throw new IllegalArgumentException(
-              "Unexpected number of calendar components: "
-                  + calendar.getComponents().size()
-                  + " for URL: "
-                  + url
-                  + " (expected: 1)");
+              "Unexpected number of calendar components: " + calendar.getComponents().size() +
+                  " for URL: " + url + " (expected: 1)");
         }
 
         CalendarComponent component = calendar.getComponents().get(0);
@@ -155,11 +154,11 @@ public class CalHandler {
 
         // upload event
         String eventUrl = davConf.calUrl() + personCal.getUid().getValue() + ".ics";
-        try (InputStream inputStream =
-            new ByteArrayInputStream(eventContent.getBytes(StandardCharsets.UTF_8))) {
+        try (InputStream inputStream = new ByteArrayInputStream(
+            eventContent.getBytes(StandardCharsets.UTF_8))) {
           sardine.put(eventUrl, inputStream);
-          log.debug(
-              "Birthday event for '{}' uploaded successful: {}", person.getFullName(), eventUrl);
+          log.debug("Birthday event for '{}' uploaded successful: {}", person.getFullName(),
+              eventUrl);
         }
       } catch (Exception e) {
         log.error("Error while uploading birthday event for: {}", person.getFullName(), e);
@@ -181,23 +180,38 @@ public class CalHandler {
   }
 
   /**
-   * Builds a VEvent instance for a specified person's birthday. The event is annually repeating.
+   * Builds a VEvent instance for a specified person's birthday. The event is annually repeated.
    *
    * @param person the Person object containing the birthday and other related information
    * @return the constructed VEvent representing the person's birthday
    */
   private VEvent buildBirthdayEvent(Person person) {
     String summary = eventConf.generateSummary(person);
+    String description = eventConf.generateDescription(person);
     VEvent birthdayEvent = new VEvent(person.birthday(), summary);
     birthdayEvent.add(uidGenerator.generateUid());
+
+    // build and add the repetition rule
     Recur<LocalDate> recur = new Recur.Builder<LocalDate>().frequency(Frequency.YEARLY).build();
     recur.getMonthList().add(Month.valueOf(person.birthday().getMonthValue()));
     recur.getMonthDayList().add(person.birthday().getDayOfMonth());
-    String description = eventConf.generateDescription(person);
     birthdayEvent.add(new RRule<>(recur));
+
+    if (eventConf.getAlarmDuration() != null) {
+      // build and add an alarm
+      VAlarm alarm = new VAlarm();
+      alarm.add(new Trigger(eventConf.getAlarmDuration()));
+      alarm.add(new Action(Action.VALUE_DISPLAY));
+      alarm.add(new Description(description));
+      alarm.add(new Summary(summary));
+      birthdayEvent.add(alarm);
+    }
+
+    // add other properties
     birthdayEvent.add(new Categories(conf.calendarCategory()));
     birthdayEvent.add(new Transp(Transp.VALUE_TRANSPARENT));
     birthdayEvent.add(new Description(description));
+
     return birthdayEvent;
   }
 }

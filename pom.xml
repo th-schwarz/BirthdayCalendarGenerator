@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.1</version>
+        <version>3.4.6</version>
         <relativePath /> <!-- lookup parent from repository -->
     </parent>
     <packaging>jar</packaging>
@@ -16,13 +16,13 @@
     <name>Birthday Calendar Generator</name>
 
     <issueManagement>
-        <url>https://github.com/th-schwarz/BCG/issues</url>
+        <url>https://github.com/th-schwarz/BirthdayCalendarCreator/issues</url>
         <system>GitHub Issues</system>
     </issueManagement>
 
     <scm>
-        <developerConnection>scm:git:git@github.com:th-schwarz/BCG</developerConnection>
-        <connection>scm:git:git@github.com:th-schwarz/BCG</connection>
+        <developerConnection>scm:git:git@github.com:th-schwarz/BirthdayCalendarCreator</developerConnection>
+        <connection>scm:git:git@github.com:th-schwarz/BirthdayCalendarCreator</connection>
         <tag>HEAD</tag>
     </scm>
 
