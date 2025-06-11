@@ -42,7 +42,7 @@ Event settings:
 d=day, h=hours +
 E.g.: _12h_ triggers a notification 12 hours before the birthday event.
 
-The placeholders '&#126;first-name&#126;', '&#126;last-name&#126;' and '&#126;birthday&#126;' are self-explain placeholder hat can be used in 'description' and 'summary'.
+The placeholders '&#126;first-name&#126;', '&#126;last-name&#126;' and '&#126;birthday&#126;' are self-explain placeholder that can be used in 'description' and 'summary'.
 
 == Individual settings
 
