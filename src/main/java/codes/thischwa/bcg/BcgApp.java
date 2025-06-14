@@ -8,6 +8,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Profile;
 
 
 /**
@@ -40,6 +41,7 @@ public class BcgApp {
      * Adds a command-line option to stop the application after calendar synchronization.
      */
     @Bean
+    @Profile("!test")
     public ApplicationRunner applicationRunner(BirthdayScheduler birthdayScheduler) {
         return args -> {
             if (args.containsOption("run-once")) {
