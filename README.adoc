@@ -105,8 +105,10 @@ The start by command line looks like:
 [source,bash]
 ----
 cd /opt/bcg/
-java -jar bcg.jar --logging.config=logback.xml
+java -jar bcg.jar --logging.config=logback.xml --run-once
 ----
+
+If you want the application to execute the birthday calendar synchronization only once and then exit immediately, you can use the `--run-once` parameter (one-time processing).
 
 === by systemd Service
 

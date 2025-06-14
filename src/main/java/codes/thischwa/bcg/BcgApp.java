@@ -1,40 +1,53 @@
 package codes.thischwa.bcg;
 
+import codes.thischwa.bcg.service.BirthdayScheduler;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
+import org.springframework.context.annotation.Bean;
+
 
 /**
- * Main entry point for the Birthday Calendar Generator (BCG) application.
+ * The main application class for the Birthday Calendar Generator (BCG) application.
  *
- * <p>The BcgApp class is responsible for initiating the Spring Boot application context and
- * configuring application properties. It is marked with Spring Boot annotations to enable component
- * scanning, property scanning, and logging functionality. The application's main method uses the
- * SpringApplicationBuilder to configure and start the application in a non-web environment.
+ * <p>This class acts as the entry point for running the Spring Boot application. It starts the
+ * application with a non-web configuration and handles any unexpected exceptions during startup.
  *
- * <p>Behavior: - The application starts in a non-web mode using the {@link
- * WebApplicationType#NONE}. - If an exception occurs during startup, the application logs the error
- * message and exits with status code 10.
+ * <p>The application runner bean provided in this class includes special functionality to stop the
+ * application after a single invocation of the birthday calendar synchronization process, in case
+ * the `run-once` argument is detected.
  */
 @ConfigurationPropertiesScan
 @SpringBootApplication
 @Slf4j
 public class BcgApp {
 
-
-  /**
-   * Main method to launch the Birthday Calendar Generator (BCG) application.
-   *
-   * @param args An array of command-line arguments passed to the application on startup.
-   */
-  public static void main(String[] args) {
-    try {
-      new SpringApplicationBuilder(BcgApp.class).web(WebApplicationType.NONE).run(args);
-    } catch (Exception e) {
-      log.error("Unexpected exception, Spring Boot stops! Message: {}", e.getMessage());
-      System.exit(10);
+    public static void main(String[] args) {
+        try {
+            new SpringApplicationBuilder(BcgApp.class)
+                    .web(WebApplicationType.NONE)
+                    .run(args);
+        } catch (Exception e) {
+            log.error("Unexpected exception, Spring Boot stops! Message: {}", e.getMessage());
+            System.exit(10);
+        }
     }
-  }
+
+    /**
+     * Adds a command-line option to stop the application after calendar synchronization.
+     */
+    @Bean
+    public ApplicationRunner applicationRunner(BirthdayScheduler birthdayScheduler) {
+        return args -> {
+            if (args.containsOption("run-once")) {
+                log.info("Argument '--run-once' detected. Starting calendar synchronization...");
+                birthdayScheduler.process(); // Trigger calendar sync
+                log.info("Calendar synchronization complete (run-once). Shutting down application.");
+                System.exit(0);
+            }
+        };
+    }
 }
