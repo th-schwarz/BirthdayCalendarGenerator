@@ -13,8 +13,10 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import net.fortuna.ical4j.data.CalendarBuilder;
@@ -179,6 +181,11 @@ public class CalHandler {
     return calendar;
   }
 
+  private Summary buildSummary(Person person) {
+    String summary = eventConf.generateSummary(person);
+    return new Summary(summary);
+  }
+
   /**
    * Builds a VEvent instance for a specified person's birthday. The event is annually repeated.
    *
@@ -186,9 +193,9 @@ public class CalHandler {
    * @return the constructed VEvent representing the person's birthday
    */
   private VEvent buildBirthdayEvent(Person person) {
-    String summary = eventConf.generateSummary(person);
+    Summary summary = buildSummary(person);
     String description = eventConf.generateDescription(person);
-    VEvent birthdayEvent = new VEvent(person.birthday(), summary);
+    VEvent birthdayEvent = new VEvent(person.birthday(), summary.getValue());
     birthdayEvent.add(uidGenerator.generateUid());
 
     // build and add the repetition rule
@@ -203,7 +210,7 @@ public class CalHandler {
       alarm.add(new Trigger(eventConf.getAlarmDuration()));
       alarm.add(new Action(Action.VALUE_DISPLAY));
       alarm.add(new Description(description));
-      alarm.add(new Summary(summary));
+      alarm.add(summary);
       birthdayEvent.add(alarm);
     }
 
@@ -213,5 +220,98 @@ public class CalHandler {
     birthdayEvent.add(new Description(description));
 
     return birthdayEvent;
+  }
+
+    void syncEventsWithBirthdayChanges(List<Person> currentPeople) throws IOException {
+        // collect birthday events
+        Set<URI> calendarEntries = new HashSet<>();
+        List<DavResource> davResources = sardine.list(davConf.calUrl());
+        for (DavResource resource : davResources) {
+            if (CALENDAR_CONTENT_TYPE.equalsIgnoreCase(resource.getContentType())) {
+                // Verwende direkt convert mit resource
+                VEvent currentEvent = convert(resource);
+                if (currentEvent != null && matchCategory(currentEvent)) {
+                    calendarEntries.add(resource.getHref());
+                }
+            }
+        }
+
+        // build UUID-Map for people
+        Map<String, Person> peopleByUuid = new HashMap<>();
+        for (Person person : currentPeople) {
+            String uuid = generatePersonUUID(person);
+            peopleByUuid.put(uuid, person);
+        }
+
+        // Synchronisation: add, update, delete
+        for (URI eventUri : calendarEntries) {
+            String eventId = extractEventId(eventUri); // UUID aus URI extrahieren
+            Person matchingPerson = peopleByUuid.get(eventId);
+
+            if (matchingPerson == null) {
+                // Person not found, delete
+                sardine.delete(davConf.getBaseUrl() + eventUri.getPath());
+                log.info("Deleted event: {}", eventId);
+            } else {
+                // Kalendereinträge prüfen und ggf. aktualisieren
+                VEvent calendarEvent =  getDavResource(eventUri); // Hole DavResource
+                if (!isEventUpToDate(calendarEvent, matchingPerson)) {
+                    Calendar updatedCalendar = buildPersonBirthdayCalendar(matchingPerson);
+                    uploadSingleEvent(updatedCalendar, matchingPerson);
+                    log.info("Updated event for: {}", matchingPerson.getFullName());
+                }
+                peopleByUuid.remove(eventId);
+            }
+        }
+
+        // Neue Geburtstage hinzufügen
+        for (Person newPerson : peopleByUuid.values()) {
+            Calendar personCal = buildPersonBirthdayCalendar(newPerson);
+            uploadSingleEvent(personCal, newPerson);
+            log.info("Added new event for: {}", newPerson.getFullName());
+        }
+    }
+
+  private String extractEventId(URI eventUri) {
+    // Extrahiere die UUID aus der URI des Kalendereintrags
+    String path = eventUri.getPath();
+    String[] segments = path.split("/");
+    String fileName = segments[segments.length - 1]; // Name der Datei extrahieren
+    return fileName.replace(".ics", ""); // ".ics" entfernen, um die ID zu erhalten
+  }
+
+  private String generatePersonUUID(Person person) {
+    return person.getFullName() + "_" + person.birthday();
+  }
+
+  private boolean isEventUpToDate(VEvent event, Person person) {
+    // Vergleiche die relevanten Felder zwischen Person und VEvent (z. B. Datum, Name)
+    return buildSummary(person).equals(event.getSummary().get()) &&
+        person.birthday().equals(event.getDateTimeStart().get().getDate());
+  }
+
+  private void uploadSingleEvent(Calendar calendar, Person person) throws IOException {
+    String eventContent = calendar.toString();
+    String eventUrl = davConf.calUrl() + generatePersonUUID(person) + ".ics";
+    try (InputStream inputStream = new ByteArrayInputStream(
+        eventContent.getBytes(StandardCharsets.UTF_8))) {
+      sardine.put(eventUrl, inputStream);
+      log.debug("Uploaded birthday event for '{}': {}", person.getFullName(), eventUrl);
+    }
+  }
+
+  private VEvent getDavResource(URI uri) {
+    try (InputStream inputStream = sardine.get(davConf.getBaseUrl() + uri.getPath())) {
+      CalendarBuilder builder = new CalendarBuilder();
+      Calendar calendar = builder.build(inputStream);
+      if (!calendar.getComponents().isEmpty() &&
+          calendar.getComponents().get(0) instanceof VEvent) {
+        return (VEvent) calendar.getComponents().get(0);
+      } else {
+        throw new IllegalArgumentException("No valid VEvent found in calendar resource.");
+      }
+    } catch (Exception e) {
+      throw new IllegalArgumentException("Error parsing DAV resource", e);
+    }
   }
 }

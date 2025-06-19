@@ -29,26 +29,19 @@ public class BirthdayCalGenerator {
   }
 
   /**
-   * Processes the birthday calendar by performing the following operations:
+   * Processes and synchronizes birthday events.
    *
-   * <ol>
-   *   <li>Clears the remote calendar through the `calHandler`.
-   *   <li>Reads a list of people with birthdays using the `cardHandler`.
-   *   <li>Uploads the generated birthday events to a calendar through the `calHandler`.
-   * </ol>
+   * <p>This method retrieves a list of people with birthdays from the card handler and syncs these
+   * details with the calendar using the calendar handler. It ensures that all birthday events
+   * in the calendar reflect any changes in the underlying data source, such as additions,
+   * updates, or deletions of birthdays.
    *
-   * <p>The actual approach is 'brute-force'.
-   *
-   * @throws IOException if an I/O error occurs during any of the processing steps.
+   * @throws IOException if an I/O error occurs during synchronization operations.
    */
   public void processBirthdayEvents() throws IOException {
-    log.info("Processing clear remote calendar ...");
-    calHandler.clearRemoteCalendar();
-    log.info("Processed clear remote calendar successfully.");
-
-    log.info("Processing birthday events ...");
+    log.info("Syncing birthday events ...");
     List<Person> people = cardHandler.readPeopleWithBirthday();
-    calHandler.uploadEventsToCalendar(people);
-    log.info("Processed birthday events successfully.");
+    calHandler.syncEventsWithBirthdayChanges(people);
+    log.info("Synced birthday events successfully.");
   }
 }
