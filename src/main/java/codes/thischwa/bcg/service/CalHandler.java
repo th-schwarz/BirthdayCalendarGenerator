@@ -13,16 +13,18 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import net.fortuna.ical4j.data.CalendarBuilder;
 import net.fortuna.ical4j.data.ParserException;
 import net.fortuna.ical4j.model.Calendar;
 import net.fortuna.ical4j.model.Month;
+import net.fortuna.ical4j.model.Property;
 import net.fortuna.ical4j.model.Recur;
 import net.fortuna.ical4j.model.component.CalendarComponent;
 import net.fortuna.ical4j.model.component.VAlarm;
@@ -36,16 +38,13 @@ import net.fortuna.ical4j.model.property.RRule;
 import net.fortuna.ical4j.model.property.Summary;
 import net.fortuna.ical4j.model.property.Transp;
 import net.fortuna.ical4j.model.property.Trigger;
+import net.fortuna.ical4j.model.property.Uid;
 import net.fortuna.ical4j.model.property.Version;
 import net.fortuna.ical4j.transform.recurrence.Frequency;
 import net.fortuna.ical4j.util.CompatibilityHints;
-import net.fortuna.ical4j.util.RandomUidGenerator;
-import net.fortuna.ical4j.util.UidGenerator;
 
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
 
 /**
  * The CalHandler class is responsible for managing calendar-related operations, including clearing
@@ -58,7 +57,6 @@ import java.util.ArrayList;
 public class CalHandler {
 
   private static final String CALENDAR_CONTENT_TYPE = "text/calendar";
-  private final UidGenerator uidGenerator = new RandomUidGenerator();
   private final BcgConf conf;
   private final EventConf eventConf;
   private final DavConf davConf;
@@ -79,37 +77,6 @@ public class CalHandler {
     this.sardine.enablePreemptiveAuthentication(davConf.getBaseUrl());
     CompatibilityHints.setHintEnabled(CompatibilityHints.KEY_RELAXED_UNFOLDING, true);
     CompatibilityHints.setHintEnabled(CompatibilityHints.KEY_RELAXED_VALIDATION, true);
-  }
-
-  /**
-   * Clears the remote calendar by removing all resources of type "text/calendar" from the specified
-   * DAV server.
-   *
-   * @throws IOException if there is an error during communication with the DAV server while listing
-   *                     or deleting resources.
-   */
-  void clearRemoteCalendar() throws IOException {
-    Set<URI> calendarEntries = getRemoteEventsToDelete();
-    if (!calendarEntries.isEmpty()) {
-      log.info("{} calendar items found to be removed", calendarEntries.size());
-      deleteRemoteEvents(calendarEntries);
-    }
-  }
-
-  private Set<URI> getRemoteEventsToDelete() throws IOException {
-    List<DavResource> davResources = sardine.list(davConf.calUrl());
-    Set<URI> calendarEntries = new HashSet<>();
-    for (DavResource resource : davResources) {
-      if (CALENDAR_CONTENT_TYPE.equalsIgnoreCase(resource.getContentType())) {
-        log.debug("Calendar found: name={}, display-name={}", resource.getName(),
-            resource.getDisplayName());
-        VEvent birthdayEvent = convert(resource);
-        if (birthdayEvent != null && matchCategory(birthdayEvent)) {
-          calendarEntries.add(resource.getHref());
-        }
-      }
-    }
-    return calendarEntries;
   }
 
   private boolean matchCategory(VEvent event) {
@@ -150,26 +117,6 @@ public class CalHandler {
     return null;
   }
 
-  void uploadEventsToCalendar(List<Person> people) {
-    for (Person person : people) {
-      try {
-        Calendar personCal = buildPersonBirthdayCalendar(person);
-        String eventContent = personCal.toString();
-
-        // upload event
-        String eventUrl = davConf.calUrl() + personCal.getUid().getValue() + ".ics";
-        try (InputStream inputStream = new ByteArrayInputStream(
-            eventContent.getBytes(StandardCharsets.UTF_8))) {
-          sardine.put(eventUrl, inputStream);
-          log.debug("Birthday event for '{}' uploaded successful: {}", person.getFullName(),
-              eventUrl);
-        }
-      } catch (Exception e) {
-        log.error("Error while uploading birthday event for: {}", person.getFullName(), e);
-      }
-    }
-  }
-
   private Calendar buildPersonBirthdayCalendar(Person person) {
     Version version = new Version();
     version.setValue(Version.VALUE_2_0);
@@ -198,7 +145,7 @@ public class CalHandler {
     Summary summary = buildSummary(person);
     String description = eventConf.generateDescription(person);
     VEvent birthdayEvent = new VEvent(person.birthday(), summary.getValue());
-    birthdayEvent.add(uidGenerator.generateUid());
+    birthdayEvent.add(new Uid(generatePersonUUID(person)));
 
     // build and add the repetition rule
     Recur<LocalDate> recur = new Recur.Builder<LocalDate>().frequency(Frequency.YEARLY).build();
@@ -224,8 +171,7 @@ public class CalHandler {
     return birthdayEvent;
   }
 
-  
-    void syncEventsWithBirthdayChanges(List<Person> currentPeople) throws IOException {
+  void syncEventsWithBirthdayChanges(List<Person> currentPeople) throws IOException {
     List<Person> changedOrMissingPeople = findChangedOrMissingBirthdays(currentPeople);
     if (changedOrMissingPeople.isEmpty()) {
       log.info("No birthday events to update found. Sync stopped.");
@@ -236,69 +182,64 @@ public class CalHandler {
     Map<String, URI> existingEventUris = new HashMap<>();
     List<DavResource> davResources = sardine.list(davConf.calUrl());
     for (DavResource resource : davResources) {
-        if (CALENDAR_CONTENT_TYPE.equalsIgnoreCase(resource.getContentType())) {
-            String eventId = extractEventId(resource.getHref());
-            existingEventUris.put(eventId, resource.getHref());
-        }
+      if (CALENDAR_CONTENT_TYPE.equalsIgnoreCase(resource.getContentType())) {
+        String eventId = extractEventId(resource.getHref());
+        existingEventUris.put(eventId, resource.getHref());
+      }
     }
     log.debug("Found {} existing birthday events", existingEventUris.size());
 
-    // Schritt 3: Aktualisiere oder füge neue Einträge hinzu
     for (Person person : changedOrMissingPeople) {
-        Calendar personCal = buildPersonBirthdayCalendar(person);
-        uploadSingleEvent(personCal, person);
-        log.info("Added or updated event for: {}", person.getFullName());
+      Calendar personCal = buildPersonBirthdayCalendar(person);
+      uploadSingleEvent(personCal, person);
+      log.info("Added or updated event for: {}", person.getFullName());
 
-        // Verarbeiteten Eintrag aus den bestehenden Events entfernen
-        existingEventUris.remove(generatePersonUUID(person));
+      existingEventUris.remove(generatePersonUUID(person));
     }
-
-    // Schritt 4: Entferne verbleibende Einträge (nicht mehr vorhandene Geburtstage)
     for (URI uri : existingEventUris.values()) {
-        sardine.delete(davConf.getBaseUrl() + uri.getPath());
-        log.info("Deleted outdated event: {}", uri.getPath());
+      sardine.delete(davConf.getBaseUrl() + uri.getPath());
+      log.info("Deleted outdated event: {}", uri.getPath());
     }
-}
+  }
 
-
-private List<Person> findChangedOrMissingBirthdays(List<Person> currentPeople) throws IOException {
+  private List<Person> findChangedOrMissingBirthdays(List<Person> currentPeople)
+      throws IOException {
     // Schritt 1: Lade alle bestehenden Geburtstagsereignisse aus dem Kalender
     Map<String, VEvent> existingEvents = new HashMap<>();
     List<DavResource> davResources = sardine.list(davConf.calUrl());
     for (DavResource resource : davResources) {
-        if (CALENDAR_CONTENT_TYPE.equalsIgnoreCase(resource.getContentType())) {
-            VEvent event = convert(resource);
-            if (event != null && matchCategory(event)) {
-                String uuid = extractPersonUUIDFromEvent(event); // UUID für die Person extrahieren
-                existingEvents.put(uuid, event); // Map: UUID -> VEvent
-            }
+      if (CALENDAR_CONTENT_TYPE.equalsIgnoreCase(resource.getContentType())) {
+        VEvent event = convert(resource);
+        if (event != null && matchCategory(event)) {
+          String uuid = extractPersonUUIDFromEvent(event); // UUID für die Person extrahieren
+          existingEvents.put(uuid, event); // Map: UUID -> VEvent
         }
+      }
     }
 
     // Schritt 2: Vergleiche die aktuellen Personen mit den bestehenden Ereignissen
     List<Person> changedOrMissingPeople = new ArrayList<>();
     for (Person person : currentPeople) {
-        String uuid = generatePersonUUID(person); // UUID für Vergleich generieren
-        VEvent existingEvent = existingEvents.get(uuid);
+      String uuid = generatePersonUUID(person); // UUID für Vergleich generieren
+      VEvent existingEvent = existingEvents.get(uuid);
 
-        if (existingEvent == null || !isEventUpToDate(existingEvent, person)) {
-            // Person hat kein entsprechendes Event oder Event ist nicht mehr aktuell
-            changedOrMissingPeople.add(person);
-        }
+      if (existingEvent == null || !isEventUpToDate(existingEvent, person)) {
+        // Person hat kein entsprechendes Event oder Event ist nicht mehr aktuell
+        changedOrMissingPeople.add(person);
+      }
     }
 
     return changedOrMissingPeople;
-}
+  }
 
-/**
- * Extrahiert die UUID der Person aus einem VEvent, basierend auf einer benutzerdefinierten Eigenschaft wie "UID".
- *
- * @param event Das VEvent, aus dem die UUID extrahiert werden soll.
- * @return Die extrahierte UUID der Person.
- */
-private String extractPersonUUIDFromEvent(VEvent event) {
-    return event.getUid().toString(); // UUID wird auf Basis der UID-Eigenschaft des Ereignisses zurückgegeben
-}
+  private String extractPersonUUIDFromEvent(VEvent event)  {
+    try {
+      Property p = event.getProperty(Uid.UID).orElseThrow();
+      return p.getValue();
+    } catch (NoSuchElementException e) {
+      throw new IllegalArgumentException(e);
+    }
+  }
 
   private String extractEventId(URI eventUri) {
     // Extrahiere die UUID aus der URI des Kalendereintrags
@@ -309,12 +250,11 @@ private String extractPersonUUIDFromEvent(VEvent event) {
   }
 
   private String generatePersonUUID(Person person) {
-    String uniqueId= person.getFullName() + "_" + person.birthday();
+    String uniqueId = person.getFullName() + "_" + person.birthday();
     return uniqueId.replaceAll("[^a-zA-Z0-9]", "_");
   }
 
   private boolean isEventUpToDate(VEvent event, Person person) {
-    // Vergleiche die relevanten Felder zwischen Person und VEvent (z. B. Datum, Name)
     return buildSummary(person).equals(event.getSummary().get()) &&
         person.birthday().equals(event.getDateTimeStart().get().getDate());
   }
