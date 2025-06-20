@@ -191,7 +191,8 @@ public class CalHandler {
     for (Person person : changedOrMissingPeople) {
       Calendar personCal = buildPersonBirthdayCalendar(person);
       String uuid = generatePersonUUID(person);
-      sardine.delete(davConf.getBaseUrl() + existingEventUris.get(uuid).getPath());
+      URI eventUri = existingEventUris.get(uuid);
+      sardine.delete(davConf.getBaseUrl() + eventUri.getPath());
       uploadSingleEvent(personCal, person);
       log.info("Added or updated event for: {}", person.getFullName());
 
