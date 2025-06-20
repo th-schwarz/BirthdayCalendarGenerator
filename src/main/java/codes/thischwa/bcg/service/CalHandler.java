@@ -45,6 +45,8 @@ import net.fortuna.ical4j.util.UidGenerator;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+
 /**
  * The CalHandler class is responsible for managing calendar-related operations, including clearing
  * remote calendars and uploading calendar events for specific individuals. This class leverages
@@ -222,55 +224,81 @@ public class CalHandler {
     return birthdayEvent;
   }
 
+  
     void syncEventsWithBirthdayChanges(List<Person> currentPeople) throws IOException {
-        // collect birthday events
-        Set<URI> calendarEntries = new HashSet<>();
-        List<DavResource> davResources = sardine.list(davConf.calUrl());
-        for (DavResource resource : davResources) {
-            if (CALENDAR_CONTENT_TYPE.equalsIgnoreCase(resource.getContentType())) {
-                // Verwende direkt convert mit resource
-                VEvent currentEvent = convert(resource);
-                if (currentEvent != null && matchCategory(currentEvent)) {
-                    calendarEntries.add(resource.getHref());
-                }
-            }
-        }
+    List<Person> changedOrMissingPeople = findChangedOrMissingBirthdays(currentPeople);
+    if (changedOrMissingPeople.isEmpty()) {
+      log.info("No birthday events to update found. Sync stopped.");
+      return;
+    }
+    log.info("Found {} changed or missing birthday events.", changedOrMissingPeople.size());
 
-        // build UUID-Map for people
-        Map<String, Person> peopleByUuid = new HashMap<>();
-        for (Person person : currentPeople) {
-            String uuid = generatePersonUUID(person);
-            peopleByUuid.put(uuid, person);
-        }
-
-        // Synchronisation: add, update, delete
-        for (URI eventUri : calendarEntries) {
-            String eventId = extractEventId(eventUri); // UUID aus URI extrahieren
-            Person matchingPerson = peopleByUuid.get(eventId);
-
-            if (matchingPerson == null) {
-                // Person not found, delete
-                sardine.delete(davConf.getBaseUrl() + eventUri.getPath());
-                log.info("Deleted event: {}", eventId);
-            } else {
-                // Kalendereinträge prüfen und ggf. aktualisieren
-                VEvent calendarEvent =  getDavResource(eventUri); // Hole DavResource
-                if (!isEventUpToDate(calendarEvent, matchingPerson)) {
-                    Calendar updatedCalendar = buildPersonBirthdayCalendar(matchingPerson);
-                    uploadSingleEvent(updatedCalendar, matchingPerson);
-                    log.info("Updated event for: {}", matchingPerson.getFullName());
-                }
-                peopleByUuid.remove(eventId);
-            }
-        }
-
-        // Neue Geburtstage hinzufügen
-        for (Person newPerson : peopleByUuid.values()) {
-            Calendar personCal = buildPersonBirthdayCalendar(newPerson);
-            uploadSingleEvent(personCal, newPerson);
-            log.info("Added new event for: {}", newPerson.getFullName());
+    Map<String, URI> existingEventUris = new HashMap<>();
+    List<DavResource> davResources = sardine.list(davConf.calUrl());
+    for (DavResource resource : davResources) {
+        if (CALENDAR_CONTENT_TYPE.equalsIgnoreCase(resource.getContentType())) {
+            String eventId = extractEventId(resource.getHref());
+            existingEventUris.put(eventId, resource.getHref());
         }
     }
+    log.debug("Found {} existing birthday events", existingEventUris.size());
+
+    // Schritt 3: Aktualisiere oder füge neue Einträge hinzu
+    for (Person person : changedOrMissingPeople) {
+        Calendar personCal = buildPersonBirthdayCalendar(person);
+        uploadSingleEvent(personCal, person);
+        log.info("Added or updated event for: {}", person.getFullName());
+
+        // Verarbeiteten Eintrag aus den bestehenden Events entfernen
+        existingEventUris.remove(generatePersonUUID(person));
+    }
+
+    // Schritt 4: Entferne verbleibende Einträge (nicht mehr vorhandene Geburtstage)
+    for (URI uri : existingEventUris.values()) {
+        sardine.delete(davConf.getBaseUrl() + uri.getPath());
+        log.info("Deleted outdated event: {}", uri.getPath());
+    }
+}
+
+
+private List<Person> findChangedOrMissingBirthdays(List<Person> currentPeople) throws IOException {
+    // Schritt 1: Lade alle bestehenden Geburtstagsereignisse aus dem Kalender
+    Map<String, VEvent> existingEvents = new HashMap<>();
+    List<DavResource> davResources = sardine.list(davConf.calUrl());
+    for (DavResource resource : davResources) {
+        if (CALENDAR_CONTENT_TYPE.equalsIgnoreCase(resource.getContentType())) {
+            VEvent event = convert(resource);
+            if (event != null && matchCategory(event)) {
+                String uuid = extractPersonUUIDFromEvent(event); // UUID für die Person extrahieren
+                existingEvents.put(uuid, event); // Map: UUID -> VEvent
+            }
+        }
+    }
+
+    // Schritt 2: Vergleiche die aktuellen Personen mit den bestehenden Ereignissen
+    List<Person> changedOrMissingPeople = new ArrayList<>();
+    for (Person person : currentPeople) {
+        String uuid = generatePersonUUID(person); // UUID für Vergleich generieren
+        VEvent existingEvent = existingEvents.get(uuid);
+
+        if (existingEvent == null || !isEventUpToDate(existingEvent, person)) {
+            // Person hat kein entsprechendes Event oder Event ist nicht mehr aktuell
+            changedOrMissingPeople.add(person);
+        }
+    }
+
+    return changedOrMissingPeople;
+}
+
+/**
+ * Extrahiert die UUID der Person aus einem VEvent, basierend auf einer benutzerdefinierten Eigenschaft wie "UID".
+ *
+ * @param event Das VEvent, aus dem die UUID extrahiert werden soll.
+ * @return Die extrahierte UUID der Person.
+ */
+private String extractPersonUUIDFromEvent(VEvent event) {
+    return event.getUid().toString(); // UUID wird auf Basis der UID-Eigenschaft des Ereignisses zurückgegeben
+}
 
   private String extractEventId(URI eventUri) {
     // Extrahiere die UUID aus der URI des Kalendereintrags
@@ -281,7 +309,8 @@ public class CalHandler {
   }
 
   private String generatePersonUUID(Person person) {
-    return person.getFullName() + "_" + person.birthday();
+    String uniqueId= person.getFullName() + "_" + person.birthday();
+    return uniqueId.replaceAll("[^a-zA-Z0-9]", "_");
   }
 
   private boolean isEventUpToDate(VEvent event, Person person) {
