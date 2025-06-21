@@ -35,12 +35,12 @@ public class EventConf {
       Pattern pattern = Pattern.compile("(\\d+)([dh])");
       Matcher matcher = pattern.matcher(alarm);
       if (matcher.matches()) {
-        int number = Integer.parseInt(matcher.group(1)) * -1;
+        int number = Integer.parseInt(matcher.group(1));
         String unit = matcher.group(2);
         if ("d".equals(unit)) {
-          alarmDuration = Duration.ofDays(number);
+          alarmDuration = Duration.ofDays(number).negated();
         } else if ("h".equals(unit)) {
-          alarmDuration = Duration.ofHours(number);
+          alarmDuration = Duration.ofHours(number).negated();
         }
       } else {
         log.warn("Invalid alarm configuration found. Expected format: <number>[dh], actual: {}", alarm);

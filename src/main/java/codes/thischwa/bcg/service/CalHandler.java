@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import net.fortuna.ical4j.data.CalendarBuilder;
@@ -29,9 +30,12 @@ import net.fortuna.ical4j.model.Recur;
 import net.fortuna.ical4j.model.component.CalendarComponent;
 import net.fortuna.ical4j.model.component.VAlarm;
 import net.fortuna.ical4j.model.component.VEvent;
+import net.fortuna.ical4j.model.parameter.Value;
 import net.fortuna.ical4j.model.property.Action;
+import net.fortuna.ical4j.model.property.CalScale;
 import net.fortuna.ical4j.model.property.Categories;
 import net.fortuna.ical4j.model.property.Description;
+import net.fortuna.ical4j.model.property.DtStart;
 import net.fortuna.ical4j.model.property.Method;
 import net.fortuna.ical4j.model.property.ProdId;
 import net.fortuna.ical4j.model.property.RRule;
@@ -124,6 +128,7 @@ public class CalHandler {
     calendar.add(new ProdId(conf.getProdId()));
     calendar.add(version);
     calendar.add(new Method(Method.VALUE_PUBLISH));
+    calendar.add(new CalScale(CalScale.VALUE_GREGORIAN)); //
 
     VEvent birthdayEvent = buildBirthdayEvent(person);
     calendar.add(birthdayEvent);
@@ -153,13 +158,20 @@ public class CalHandler {
     recur.getMonthDayList().add(person.birthday().getDayOfMonth());
     birthdayEvent.add(new RRule<>(recur));
 
+
     if (eventConf.getAlarmDuration() != null) {
       // build and add an alarm
       VAlarm alarm = new VAlarm();
-      alarm.add(new Trigger(eventConf.getAlarmDuration()));
+
+      // create trigger with VALUE=DURATION explicitly
+      Trigger trigger = new Trigger(eventConf.getAlarmDuration());
+      trigger.getParameters().add(Value.DURATION);
+
+      alarm.add(trigger);
       alarm.add(new Action(Action.VALUE_DISPLAY));
       alarm.add(new Description(description));
       alarm.add(summary);
+
       birthdayEvent.add(alarm);
     }
 
@@ -171,70 +183,64 @@ public class CalHandler {
     return birthdayEvent;
   }
 
-  void syncEventsWithBirthdayChanges(List<Person> currentPeople) throws IOException {
-    List<Person> changedOrMissingPeople = findChangedOrMissingBirthdays(currentPeople);
-    if (changedOrMissingPeople.isEmpty()) {
+  void syncEventsWithBirthdayChanges(List<Person> people) throws IOException {
+    Map<String, VEvent> existingEvents = new HashMap<>();
+    Map<String, Person> existingPeople = new HashMap<>();
+    List<DavResource> davResources = sardine.list(davConf.calUrl());
+    Map<String, URI> existingEventUris = new HashMap<>();
+
+    // collecting all events matching the desired category
+    for (DavResource resource : davResources) {
+      if (CALENDAR_CONTENT_TYPE.equalsIgnoreCase(resource.getContentType())) {
+        VEvent event = convert(resource);
+        if (event != null && matchCategory(event)) {
+          String uuid = extractPersonUUIDFromEvent(event);
+          existingEvents.put(uuid, event);
+          String eventId = extractEventId(resource.getHref());
+          existingEventUris.put(eventId, resource.getHref());
+        }
+      }
+    }
+
+    people.forEach(person -> existingPeople.put(generatePersonUUID(person), person));
+    existingEvents.keySet().forEach((eventUuid) -> {
+      if (!existingPeople.containsKey(eventUuid)) {
+        URI eventUri = existingEventUris.get(eventUuid);
+        try {
+          sardine.delete(davConf.getBaseUrl() + eventUri.getPath());
+          log.debug("Deleted outdated event: {}", eventUri.getPath());
+        } catch (IOException e) {
+          log.error("Failed to delete outdated event: {}", eventUri.getPath(), e);
+        }
+      }
+    });
+
+    List<Person> changedPeople = new ArrayList<>();
+    // collect people whose birthday has changed
+    for (Person person : people) {
+      String uuid = generatePersonUUID(person);
+      VEvent existingEvent = existingEvents.get(uuid);
+
+      if (existingEvent == null || !isEventUpToDate(existingEvent, person)) {
+        changedPeople.add(person);
+      }
+    }
+    if (changedPeople.isEmpty()) {
       log.info("No birthday events to update found. Sync stopped.");
       return;
     }
 
-    Map<String, URI> existingEventUris = new HashMap<>();
-    List<DavResource> davResources = sardine.list(davConf.calUrl());
-    for (DavResource resource : davResources) {
-      if (CALENDAR_CONTENT_TYPE.equalsIgnoreCase(resource.getContentType())) {
-        String eventId = extractEventId(resource.getHref());
-        existingEventUris.put(eventId, resource.getHref());
-      }
-    }
-    log.debug("Found {} existing birthday events", existingEventUris.size());
-
-    for (Person person : changedOrMissingPeople) {
+    for (Person person : changedPeople) {
       Calendar personCal = buildPersonBirthdayCalendar(person);
       String uuid = generatePersonUUID(person);
       if (existingEventUris.containsKey(uuid)) {
         URI eventUri = existingEventUris.get(uuid);
         sardine.delete(davConf.getBaseUrl() + eventUri.getPath());
-        log.debug("Deleted outdated event: {}", eventUri.getPath());
+        log.debug("Deleted outdated event before add: {}", eventUri.getPath());
       }
       uploadSingleEvent(personCal, person);
       log.info("Added or updated event for: {}", person.getFullName());
-
-      existingEventUris.remove(uuid);
     }
-    for (URI uri : existingEventUris.values()) {
-      sardine.delete(davConf.getBaseUrl() + uri.getPath());
-      log.info("Deleted outdated event: {}", uri.getPath());
-    }
-  }
-
-  private List<Person> findChangedOrMissingBirthdays(List<Person> currentPeople)
-      throws IOException {
-    Map<String, VEvent> existingEvents = new HashMap<>();
-    List<DavResource> davResources = sardine.list(davConf.calUrl());
-    for (DavResource resource : davResources) {
-      if (CALENDAR_CONTENT_TYPE.equalsIgnoreCase(resource.getContentType())) {
-        VEvent event = convert(resource);
-        if (event != null && matchCategory(event)) {
-          String uuid = extractPersonUUIDFromEvent(event); // UUID für die Person extrahieren
-          existingEvents.put(uuid, event); // Map: UUID -> VEvent
-        }
-      }
-    }
-
-    // Schritt 2: Vergleiche die aktuellen Personen mit den bestehenden Ereignissen
-    List<Person> changedOrMissingPeople = new ArrayList<>();
-    for (Person person : currentPeople) {
-      String uuid = generatePersonUUID(person); // UUID für Vergleich generieren
-      VEvent existingEvent = existingEvents.get(uuid);
-
-      if (existingEvent == null || !isEventUpToDate(existingEvent, person)) {
-        // Person hat kein entsprechendes Event oder Event ist nicht mehr aktuell
-        changedOrMissingPeople.add(person);
-      }
-    }
-
-    log.info("Found {} changed or missing birthday events", changedOrMissingPeople.size());
-    return changedOrMissingPeople;
   }
 
   private String extractPersonUUIDFromEvent(VEvent event) {
@@ -259,8 +265,14 @@ public class CalHandler {
   }
 
   private boolean isEventUpToDate(VEvent event, Person person) {
-    return buildSummary(person).equals(event.getSummary().get()) &&
-        person.birthday().equals(event.getDateTimeStart().get().getDate());
+    LocalDate personBirthday = person.birthday();
+    Optional<DtStart<LocalDate>> dtStart = event.getDateTimeStart();
+    if (!dtStart.isPresent()) {
+      log.warn("Event for {} has no start date", person.getFullName());
+      return false;
+    }
+    LocalDate eventBirthday = dtStart.get().getDate();
+    return personBirthday.equals(eventBirthday);
   }
 
   private void uploadSingleEvent(Calendar calendar, Person person) throws IOException {
