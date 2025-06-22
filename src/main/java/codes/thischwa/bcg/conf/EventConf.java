@@ -1,6 +1,6 @@
 package codes.thischwa.bcg.conf;
 
-import codes.thischwa.bcg.Person;
+import codes.thischwa.bcg.Contact;
 import java.time.Duration;
 import java.time.format.DateTimeFormatter;
 import java.util.regex.Matcher;
@@ -55,30 +55,30 @@ public class EventConf {
    * Generates a summary for the specified person by replacing placeholders in the summary template
    * with the person's details.
    *
-   * @param person The person whose details will be used to populate the summary template.
+   * @param contact The person whose details will be used to populate the summary template.
    * @return A string containing the generated summary with placeholders replaced by the person's
    * details.
    */
-  public String generateSummary(Person person) {
-    return replace(summary, person);
+  public String generateSummary(Contact contact) {
+    return replace(summary, contact);
   }
 
   /**
    * Generates a description for the specified person by replacing placeholders in the description
    * template with the person's details.
    *
-   * @param person The person whose details will be used to populate the description template.
+   * @param contact The person whose details will be used to populate the description template.
    * @return A string containing the generated description with placeholders replaced by the
    * person's details.
    */
-  public String generateDescription(Person person) {
-    return replace(description, person);
+  public String generateDescription(Contact contact) {
+    return replace(description, contact);
   }
 
-  private String replace(String template, Person person) {
+  private String replace(String template, Contact contact) {
     DateTimeFormatter df = DateTimeFormatter.ofPattern(dateFormat);
-    return template.replace("~first-name~", person.firstName())
-        .replace("~last-name~", person.lastName()).replace("~display-name~", person.displayName())
-        .replace("~birthday~", df.format(person.birthday()));
+    return template.replace("~first-name~", contact.firstName())
+        .replace("~last-name~", contact.lastName()).replace("~display-name~", contact.displayName())
+        .replace("~birthday~", df.format(contact.birthday()));
   }
 }

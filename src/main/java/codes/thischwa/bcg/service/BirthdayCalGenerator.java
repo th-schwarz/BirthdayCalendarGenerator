@@ -1,6 +1,6 @@
 package codes.thischwa.bcg.service;
 
-import codes.thischwa.bcg.Person;
+import codes.thischwa.bcg.Contact;
 import java.io.IOException;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +40,7 @@ public class BirthdayCalGenerator {
    */
   public void processBirthdayEvents() throws IOException {
     log.info("Syncing birthday events ...");
-    List<Person> people = cardHandler.readPeopleWithBirthday();
+    List<Contact> people = cardHandler.readPeopleWithBirthday();
     calHandler.syncEventsWithBirthdayChanges(people);
     log.info("Synced birthday events successfully.");
   }

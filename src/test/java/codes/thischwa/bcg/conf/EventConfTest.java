@@ -1,7 +1,7 @@
 package codes.thischwa.bcg.conf;
 
 import codes.thischwa.bcg.AbstractIntegrationTest;
-import codes.thischwa.bcg.Person;
+import codes.thischwa.bcg.Contact;
 import java.time.Duration;
 import java.time.LocalDate;
 
@@ -17,7 +17,7 @@ class EventConfTest extends AbstractIntegrationTest {
 
   @Test
   void testEventConfPropertiesLoadedFromApplicationTestYml() {
-    Person p = new Person("Firstname", "Lastname", "FirstLast", LocalDate.of(1980, 12, 1));
+    Contact p = new Contact("Firstname", "Lastname", "FirstLast", LocalDate.of(1980, 12, 1));
     assertEquals("\uD83C\uDF82 Firstname Lastname", eventConf.generateSummary(p));
     assertEquals("Birthday: 1980-12-01", eventConf.generateDescription(p));
     assertEquals("yyyy-MM-dd", eventConf.getDateFormat());

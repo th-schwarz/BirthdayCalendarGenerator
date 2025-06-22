@@ -1,6 +1,6 @@
 package codes.thischwa.bcg.service;
 
-import codes.thischwa.bcg.Person;
+import codes.thischwa.bcg.Contact;
 import codes.thischwa.bcg.conf.BcgConf;
 import codes.thischwa.bcg.conf.DavConf;
 import codes.thischwa.bcg.conf.EventConf;
@@ -13,13 +13,11 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
-import java.time.temporal.Temporal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import net.fortuna.ical4j.data.CalendarBuilder;
@@ -122,7 +120,7 @@ public class CalHandler {
     return null;
   }
 
-  private Calendar buildPersonBirthdayCalendar(Person person) {
+  private Calendar buildBirthdayCalendar(Contact contact) {
     Version version = new Version();
     version.setValue(Version.VALUE_2_0);
     Calendar calendar = new Calendar();
@@ -131,32 +129,32 @@ public class CalHandler {
     calendar.add(new Method(Method.VALUE_PUBLISH));
     calendar.add(new CalScale(CalScale.VALUE_GREGORIAN)); //
 
-    VEvent birthdayEvent = buildBirthdayEvent(person);
+    VEvent birthdayEvent = buildBirthdayEvent(contact);
     calendar.add(birthdayEvent);
     return calendar;
   }
 
-  private Summary buildSummary(Person person) {
-    String summary = eventConf.generateSummary(person);
+  private Summary buildSummary(Contact contact) {
+    String summary = eventConf.generateSummary(contact);
     return new Summary(summary);
   }
 
   /**
    * Builds a VEvent instance for a specified person's birthday. The event is annually repeated.
    *
-   * @param person the Person object containing the birthday and other related information
+   * @param contact the Person object containing the birthday and other related information
    * @return the constructed VEvent representing the person's birthday
    */
-  private VEvent buildBirthdayEvent(Person person) {
-    Summary summary = buildSummary(person);
-    String description = eventConf.generateDescription(person);
-    VEvent birthdayEvent = new VEvent(person.birthday(), summary.getValue());
-    birthdayEvent.add(new Uid(generatePersonUUID(person)));
+  private VEvent buildBirthdayEvent(Contact contact) {
+    Summary summary = buildSummary(contact);
+    String description = eventConf.generateDescription(contact);
+    VEvent birthdayEvent = new VEvent(contact.birthday(), summary.getValue());
+    birthdayEvent.add(new Uid(createContactIdentifier(contact)));
 
     // build and add the repetition rule
     Recur<LocalDate> recur = new Recur.Builder<LocalDate>().frequency(Frequency.YEARLY).build();
-    recur.getMonthList().add(Month.valueOf(person.birthday().getMonthValue()));
-    recur.getMonthDayList().add(person.birthday().getDayOfMonth());
+    recur.getMonthList().add(Month.valueOf(contact.birthday().getMonthValue()));
+    recur.getMonthDayList().add(contact.birthday().getDayOfMonth());
     birthdayEvent.add(new RRule<>(recur));
 
 
@@ -182,9 +180,9 @@ public class CalHandler {
     return birthdayEvent;
   }
 
-  void syncEventsWithBirthdayChanges(List<Person> people) throws IOException {
+  void syncEventsWithBirthdayChanges(List<Contact> contacts) throws IOException {
     Map<String, VEvent> existingEvents = new HashMap<>();
-    Map<String, Person> existingPeople = new HashMap<>();
+    Map<String, Contact> existingContacts = new HashMap<>();
     List<DavResource> davResources = sardine.list(davConf.calUrl());
     Map<String, URI> existingEventUris = new HashMap<>();
 
@@ -193,7 +191,7 @@ public class CalHandler {
       if (CALENDAR_CONTENT_TYPE.equalsIgnoreCase(resource.getContentType())) {
         VEvent event = convert(resource);
         if (event != null && matchCategory(event)) {
-          String uuid = extractPersonUUIDFromEvent(event);
+          String uuid = extractContactsUUIDFromEvent(event);
           existingEvents.put(uuid, event);
           String eventId = extractEventId(resource.getHref());
           existingEventUris.put(eventId, resource.getHref());
@@ -201,9 +199,10 @@ public class CalHandler {
       }
     }
 
-    people.forEach(person -> existingPeople.put(generatePersonUUID(person), person));
+    // delete birthday events from contacts whose doesn't exist
+    contacts.forEach(person -> existingContacts.put(createContactIdentifier(person), person));
     existingEvents.keySet().forEach((eventUuid) -> {
-      if (!existingPeople.containsKey(eventUuid)) {
+      if (!existingContacts.containsKey(eventUuid)) {
         URI eventUri = existingEventUris.get(eventUuid);
         try {
           sardine.delete(davConf.getBaseUrl() + eventUri.getPath());
@@ -214,14 +213,15 @@ public class CalHandler {
       }
     });
 
-    List<Person> changedPeople = new ArrayList<>();
-    // collect people whose birthday has changed
-    for (Person person : people) {
-      String uuid = generatePersonUUID(person);
+    List<Contact> changedPeople = new ArrayList<>();
+    // collect contacts whose birthday has changed
+    for (Contact contact : contacts) {
+      String uuid = createContactIdentifier(contact);
       VEvent existingEvent = existingEvents.get(uuid);
 
-      if (existingEvent == null || !isEventUpToDate(existingEvent, person)) {
-        changedPeople.add(person);
+      if (existingEvent == null || !isEventUpToDate(existingEvent, contact)) {
+        changedPeople.add(contact);
+        log.debug("New or updated event for: {}", contact.getFullName());
       }
     }
     if (changedPeople.isEmpty()) {
@@ -229,20 +229,21 @@ public class CalHandler {
       return;
     }
 
-    for (Person person : changedPeople) {
-      Calendar personCal = buildPersonBirthdayCalendar(person);
-      String uuid = generatePersonUUID(person);
+    // process changed or missing birthday event
+    for (Contact contact : changedPeople) {
+      Calendar personCal = buildBirthdayCalendar(contact);
+      String uuid = createContactIdentifier(contact);
       if (existingEventUris.containsKey(uuid)) {
         URI eventUri = existingEventUris.get(uuid);
         sardine.delete(davConf.getBaseUrl() + eventUri.getPath());
         log.debug("Deleted outdated event before add: {}", eventUri.getPath());
       }
-      uploadSingleEvent(personCal, person);
-      log.info("Added or updated event for: {}", person.getFullName());
+      uploadSingleEvent(personCal, contact);
+      log.info("Added or updated event for: {}", contact.getFullName());
     }
   }
 
-  private String extractPersonUUIDFromEvent(VEvent event) {
+  private String extractContactsUUIDFromEvent(VEvent event) {
     try {
       Property p = event.getProperty(Uid.UID).orElseThrow();
       return p.getValue();
@@ -258,25 +259,25 @@ public class CalHandler {
     return fileName.replace(".ics", "");
   }
 
-  private String generatePersonUUID(Person person) {
-    String uniqueId = person.getFullName() + "_" + person.birthday();
+  private String createContactIdentifier(Contact contact) {
+    String uniqueId = contact.getFullName() + "_" + contact.birthday();
     return uniqueId.replaceAll("[^a-zA-Z0-9]", "_");
   }
 
-  private boolean isEventUpToDate(VEvent event, Person person) {
-    LocalDate personBirthday = person.birthday();
+  private boolean isEventUpToDate(VEvent event, Contact contact) {
+    LocalDate personBirthday = contact.birthday();
     DtStart<LocalDate> dtStart = event.getDateTimeStart();
     LocalDate eventBirthday = dtStart.getDate();
     return personBirthday.equals(eventBirthday);
   }
 
-  private void uploadSingleEvent(Calendar calendar, Person person) throws IOException {
+  private void uploadSingleEvent(Calendar calendar, Contact contact) throws IOException {
     String eventContent = calendar.toString();
-    String eventUrl = davConf.calUrl() + generatePersonUUID(person) + ".ics";
+    String eventUrl = davConf.calUrl() + createContactIdentifier(contact) + ".ics";
     try (InputStream inputStream = new ByteArrayInputStream(
         eventContent.getBytes(StandardCharsets.UTF_8))) {
       sardine.put(eventUrl, inputStream);
-      log.debug("Uploaded birthday event for '{}': {}", person.getFullName(), eventUrl);
+      log.debug("Uploaded birthday event for '{}': {}", contact.getFullName(), eventUrl);
     }
   }
 }

@@ -1,6 +1,6 @@
 package codes.thischwa.bcg.service;
 
-import codes.thischwa.bcg.Person;
+import codes.thischwa.bcg.Contact;
 import codes.thischwa.bcg.conf.DavConf;
 import com.github.sardine.DavResource;
 import com.github.sardine.Sardine;
@@ -49,18 +49,18 @@ public class CardHandler {
     this.davConf = davConf;
   }
 
-  List<Person> readPeopleWithBirthday() throws IllegalArgumentException {
-    List<Person> people = new ArrayList<>();
+  List<Contact> readPeopleWithBirthday() throws IllegalArgumentException {
+    List<Contact> contacts = new ArrayList<>();
     try {
       List<DavResource> addressbookItems = sardine.list(davConf.cardUrl());
       log.info("Contacts found: {}", addressbookItems.size());
 
-      for (DavResource contact : addressbookItems) {
-        if (contact.isDirectory()) {
+      for (DavResource davResource : addressbookItems) {
+        if (davResource.isDirectory()) {
           continue;
         }
-        log.info("Processing contact: {}", contact.getDisplayName());
-        URI href = new URI(davConf.getBaseUrl() + contact.getHref().toString());
+        log.info("Processing contact: {}", davResource.getDisplayName());
+        URI href = new URI(davConf.getBaseUrl() + davResource.getHref().toString());
         try (InputStream vCardStream = sardine.get(href.toString())) {
           byte[] vcfContent = IOUtils.toByteArray(vCardStream);
           VCardBuilder cardBuilder = new VCardBuilder(new ByteArrayInputStream(vcfContent));
@@ -78,18 +78,18 @@ public class CardHandler {
 
           String firstName = fullName.getGivenName();
           String lastName = fullName.getFamilyName();
-          people.add(
-              new Person(
+          contacts.add(
+              new Contact(
                   firstName,
                   lastName,
                   displayName,
                   LocalDate.parse(birthday.getValue(), birthdayFormatter)));
         } catch (IllegalArgumentException e) {
           log.warn(
-              "Error while processing contact {}: {}", contact.getDisplayName(), e.getMessage());
+              "Error while processing contact {}: {}", davResource.getDisplayName(), e.getMessage());
         }
       }
-      return people;
+      return contacts;
     } catch (Exception e) {
       throw new IllegalArgumentException(e);
     }
