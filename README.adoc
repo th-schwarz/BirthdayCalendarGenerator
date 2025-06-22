@@ -34,6 +34,9 @@ Successfully tested so far:
 - sogo 5.1.12 (mailcow-dockerized 2024-11b)
 
 == Changelog
+- v2.0.0 +
+  issue#4 implement a sync +
+  instead of the Brute-Force-Approach
 - v1.2.0 +
   issue#3 reminder for all birthday events
 - v1.1.0 +
@@ -54,8 +57,7 @@ The Birthday Calendar Generator (BCG) is an application designed to generate a b
 * A calendar "category" is defined to tag birthdays uniquely, allowing the application to manage these events effectively.
 
 . Remote Calendar Management
-* The application interacts with the configured CalDAV server and clears all pre-existing events in the specified birthday calendar that match the defined category (_Brute-Force-Approach_). This ensures no duplicate entries are present.
-* Individual birthday events are then uploaded to the remote calendar, where they are stored as `.ics` files.
+* The application interacts with the configured CalDAV server and synchronizes the events in the specified birthday calendar. It matches and updates calendar entries to reflect any changes, ensuring that no duplicates or outdated events remain.
 
 . Automation and Scheduling
 * The entire workflow is automated using a scheduled method, which is triggered periodically based on a cron expression defined in the application configuration. This ensures the calendar stays up-to-date without manual intervention.
