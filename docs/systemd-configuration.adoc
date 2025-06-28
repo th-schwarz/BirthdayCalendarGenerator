@@ -34,12 +34,23 @@ Don't forget to customize user, group and the path to the jar file!
 ----
 ● bcg.service - BCG - Birthday Calendar Generator
      Loaded: loaded (/etc/systemd/system/bcg.service; enabled; preset: enabled)
-     Active: active (running) since Wed 2024-12-11 17:08:03 CET; 5 days ago
-   Main PID: 671 (bcg.jar)
-      Tasks: 26 (limit: 9388)
-     Memory: 205.6M (peak: 273.1M)
-        CPU: 8min 56.537s
+     Active: active (running) since Sat 2025-06-28 19:13:14 CEST; 37s ago
+   Main PID: 2287794 (bcg.jar)
+      Tasks: 25 (limit: 9436)
+     Memory: 219.5M (peak: 232.3M)
+        CPU: 8.888s
      CGroup: /system.slice/bcg.service
-             ├─671 /bin/bash /opt/bcg/bcg.jar
-             └─797 /usr/bin/java -Dsun.misc.URLClassPath.disableJarChecking=true -jar /opt/bcg/bcg-0.1.0.jar
+             ├─2287794 /bin/bash /opt/bcg/bcg.jar
+             └─2287813 /usr/bin/java -Dsun.misc.URLClassPath.disableJarChecking=true -jar /opt/bcg/bcg-2.0.0.jar
+
+bcg.jar[2287813]: 19:13:15,751 |-INFO in org.springframework.boot.logging.logback.SpringBootJoranConfigurator@235a0c16 - Registering current configuration as safe fallback point
+bcg.jar[2287813]: ______  _____ _____
+bcg.jar[2287813]: | ___ \/  __ \  __ \
+bcg.jar[2287813]: | |_/ /| /  \/ |  \/
+bcg.jar[2287813]: | ___ \| |   | | __
+bcg.jar[2287813]: | |_/ /| \__/\ |_\ \
+bcg.jar[2287813]: \____/  \____/\____/
+bcg.jar[2287813]: Version: 2.0.0
+bcg.jar[2287813]: :: Spring Boot (v3.4.6) ::
+bcg.jar[2287813]: running on java 17.0.15
 ----
