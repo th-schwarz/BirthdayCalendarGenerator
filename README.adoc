@@ -99,7 +99,7 @@ dav:
 - `dav.cron`: The cron trigger used to schedule the synchronization of birthdays.
 - `dav.user`, `dav.password`: Authentication credentials for the dav server.
 - `card-url`: The address book URL from which birthdays are read.
-- `cal-url`: The url of the birthday calendar which must be created. _To be on the safe side, it's a good idea to use an extra birthday calendar! But it is not mandatory since https://github.com/th-schwarz/BirthdayCalendarGenerator/issues/2[A remote event should only be deleted if its categories contain the defined birthday category.]_
+- `cal-url`: The url of the birthday calendar which must be created. _To be on the safe side, it's a good idea to use an extra birthday calendar! But it is not mandatory since https://github.com/th-schwarz/BirthdayCalendarGenerator/issues/2[A remote event should only be deleted if its categories contain the defined birthday category.]_ was implemented.
 
 == Start
 
