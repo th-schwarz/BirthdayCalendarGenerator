@@ -10,6 +10,7 @@
 [Unit]
 Description=BCG - Birthday Calendar Generator
 After=network.target
+Requires=network.target
 
 [Service]
 User=bcg
