@@ -18,7 +18,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import net.fortuna.ical4j.data.CalendarBuilder;
 import net.fortuna.ical4j.data.ParserException;
@@ -86,14 +85,6 @@ public class CalHandler {
   private boolean matchCategory(VEvent event) {
     return event.getCategories().stream().anyMatch(
         categories -> categories.getCategories().getTexts().contains(conf.calendarCategory()));
-  }
-
-  private void deleteRemoteEvents(Set<URI> calendarEntries) throws IOException {
-    for (URI uri : calendarEntries) {
-      String path = davConf.getBaseUrl() + uri.getPath();
-      sardine.delete(path);
-      log.debug("Successfully deleted {}", path);
-    }
   }
 
   private @Nullable VEvent convert(DavResource resource) throws IllegalArgumentException {
