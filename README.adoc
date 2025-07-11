@@ -85,7 +85,7 @@ The most important settings are:
 [source,yaml]
 ----
 bcg:
-  calendar-category: Birthday
+  calendar-category: Birthday  # default
   cron: "0 30 4 * * *"  # default
 dav:
   user: dev
@@ -96,10 +96,11 @@ dav:
 
 - `bcg.calendar-category`: The value depends on the categories of the caldav server and its localization. +
 *This value is used to delete and create birthdays, the value must be set correctly initially and must not be changed!*
-- `dav.cron`: The cron trigger used to schedule the synchronization of birthdays.
+- `bcg.run-on-start`: Optional parameter, default is false. If it true, the sync starts immediately on start.
+- `bcg.cron`: The cron trigger used to schedule the synchronization of birthdays.
 - `dav.user`, `dav.password`: Authentication credentials for the dav server.
-- `card-url`: The address book URL from which birthdays are read.
-- `cal-url`: The url of the birthday calendar which must be created. _To be on the safe side, it's a good idea to use an extra birthday calendar! But it is not mandatory since https://github.com/th-schwarz/BirthdayCalendarGenerator/issues/2[A remote event should only be deleted if its categories contain the defined birthday category.]_ was implemented.
+- `dav.card-url`: The address book URL from which birthdays are read.
+- `dav.cal-url`: The url of the birthday calendar which must be created. _To be on the safe side, it's a good idea to use an extra birthday calendar! But it is not mandatory since https://github.com/th-schwarz/BirthdayCalendarGenerator/issues/2[A remote event should only be deleted if its categories contain the defined birthday category.]_ was implemented.
 
 == Start
 

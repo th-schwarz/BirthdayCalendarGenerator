@@ -6,7 +6,7 @@ spring:
 bcg:
   product: BirthdayCalendarGenerator
   calendar-category: Birthday
-  run-on-start: true
+  run-on-start: false
   cron: "0 30 4 * * *"
 
 event:
