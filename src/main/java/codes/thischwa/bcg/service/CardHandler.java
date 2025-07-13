@@ -4,7 +4,6 @@ import codes.thischwa.bcg.Contact;
 import codes.thischwa.bcg.conf.DavConf;
 import com.github.sardine.DavResource;
 import com.github.sardine.Sardine;
-import com.github.sardine.SardineFactory;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URI;
@@ -36,21 +35,28 @@ public class CardHandler {
       DateTimeFormatter.ofPattern("yyyyMMdd");
 
   private final DavConf davConf;
-  private final Sardine sardine;
+  private final SardineInitializer sardineInitializer;
 
   /**
    * Constructs a new CardHandler instance to manage operations related to DAV address book
    * services.
    *
-   * @param davConf The configuration object containing the credentials and URLs required for DAV
-   *                integration, such as user, password, and the address book URL.
+   * @param davConf            The configuration object containing the credentials and URLs required
+   *                           for DAV integration, such as user, password, and the address book
+   *                           URL.
+   * @param sardineInitializer The initializer for {@link Sardine}.
    */
-  public CardHandler(DavConf davConf) {
-    this.sardine = SardineFactory.begin(davConf.user(), davConf.password());
+  public CardHandler(DavConf davConf, SardineInitializer sardineInitializer) {
+    this.sardineInitializer = sardineInitializer;
     this.davConf = davConf;
   }
 
   List<Contact> readPeopleWithBirthday() throws IllegalArgumentException {
+    if (!sardineInitializer.isAccessible()) {
+      log.error("Access to {} timed out after {} trails.", davConf.getBaseUrl(), davConf.maxTrails());
+      throw new IllegalArgumentException("Access to " + davConf.getBaseUrl() + " timed out.");
+    }
+    Sardine sardine = sardineInitializer.getSardine();
     List<Contact> contacts = new ArrayList<>();
     try {
       List<DavResource> addressbookItems = sardine.list(davConf.cardUrl());

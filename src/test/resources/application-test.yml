@@ -15,3 +15,5 @@ dav:
   password: strong
   cal-url: https://dav.my-domain.org/SOGo/dav/dav-user/Calendar/46-12345678-5-87654321/
   card-url: https://dav.my-domain.org/SOGo/dav/dav-user/Contacts/personal/
+  max-trails: 5
+  delay-in-minutes: 1

@@ -6,7 +6,6 @@ import codes.thischwa.bcg.conf.DavConf;
 import codes.thischwa.bcg.conf.EventConf;
 import com.github.sardine.DavResource;
 import com.github.sardine.Sardine;
-import com.github.sardine.SardineFactory;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,7 +43,6 @@ import net.fortuna.ical4j.model.property.Trigger;
 import net.fortuna.ical4j.model.property.Uid;
 import net.fortuna.ical4j.model.property.Version;
 import net.fortuna.ical4j.transform.recurrence.Frequency;
-import net.fortuna.ical4j.util.CompatibilityHints;
 
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -63,23 +61,93 @@ public class CalHandler {
   private final BcgConf conf;
   private final EventConf eventConf;
   private final DavConf davConf;
-  private final Sardine sardine;
+  private final SardineInitializer sardineInitializer;
 
   /**
    * Constructor for the CalHandler class.
    *
-   * @param conf      The configuration object containing settings for the BCG system.
-   * @param eventConf The configuration object for defining event-related settings.
-   * @param davConf   The configuration object containing WebDAV user and password details.
+   * @param conf               The configuration object containing settings for the BCG system.
+   * @param eventConf          The configuration object for defining event-related settings.
+   * @param davConf            The configuration object containing WebDAV user and password
+   *                           details.
+   * @param sardineInitializer The initializer for {@link Sardine}.
    */
-  CalHandler(BcgConf conf, EventConf eventConf, DavConf davConf) {
+  CalHandler(BcgConf conf, EventConf eventConf, DavConf davConf,
+      SardineInitializer sardineInitializer) {
     this.conf = conf;
     this.eventConf = eventConf;
     this.davConf = davConf;
-    this.sardine = SardineFactory.begin(davConf.user(), davConf.password());
-    this.sardine.enablePreemptiveAuthentication(davConf.getBaseUrl());
-    CompatibilityHints.setHintEnabled(CompatibilityHints.KEY_RELAXED_UNFOLDING, true);
-    CompatibilityHints.setHintEnabled(CompatibilityHints.KEY_RELAXED_VALIDATION, true);
+    this.sardineInitializer = sardineInitializer;
+  }
+
+  void syncEventsWithBirthdayChanges(List<Contact> contacts) throws IOException {
+    if (!sardineInitializer.isAccessible()) {
+      log.error("Access to {} timed out after {} trails.", davConf.getBaseUrl(), davConf.maxTrails());
+      throw new IllegalArgumentException("Access to " + davConf.getBaseUrl() + " timed out.");
+    }
+    Sardine sardine = sardineInitializer.getSardine();
+    log.info("Syncing birthday events of {} contacts.", contacts.size());
+
+    Map<String, VEvent> existingEvents = new HashMap<>();
+    Map<String, Contact> existingContacts = new HashMap<>();
+    List<DavResource> davResources = sardine.list(davConf.calUrl());
+    Map<String, URI> existingEventUris = new HashMap<>();
+
+    // collecting all events matching the desired category
+    for (DavResource resource : davResources) {
+      if (CALENDAR_CONTENT_TYPE.equalsIgnoreCase(resource.getContentType())) {
+        VEvent event = convert(resource, sardine);
+        if (event != null && matchCategory(event)) {
+          String uuid = extractContactsUUIDFromEvent(event);
+          existingEvents.put(uuid, event);
+          String eventId = extractEventId(resource.getHref());
+          existingEventUris.put(eventId, resource.getHref());
+        }
+      }
+    }
+
+    // delete birthday events from contacts whose doesn't exist
+    contacts.forEach(person -> existingContacts.put(createContactIdentifier(person), person));
+    existingEvents.keySet().forEach((eventUuid) -> {
+      if (!existingContacts.containsKey(eventUuid)) {
+        URI eventUri = existingEventUris.get(eventUuid);
+        try {
+          sardine.delete(davConf.getBaseUrl() + eventUri.getPath());
+          log.debug("Deleted outdated event: {}", eventUri.getPath());
+        } catch (IOException e) {
+          log.error("Failed to delete outdated event: {}", eventUri.getPath(), e);
+        }
+      }
+    });
+
+    List<Contact> changedPeople = new ArrayList<>();
+    // collect contacts whose birthday has changed
+    for (Contact contact : contacts) {
+      String uuid = createContactIdentifier(contact);
+      VEvent existingEvent = existingEvents.get(uuid);
+
+      if (existingEvent == null || !isEventUpToDate(existingEvent, contact)) {
+        changedPeople.add(contact);
+        log.debug("New or updated event for: {}", contact.getFullName());
+      }
+    }
+    if (changedPeople.isEmpty()) {
+      log.info("No birthday events to update found. Sync stopped.");
+      return;
+    }
+
+    // process changed or missing birthday event
+    for (Contact contact : changedPeople) {
+      Calendar personCal = buildBirthdayCalendar(contact);
+      String uuid = createContactIdentifier(contact);
+      if (existingEventUris.containsKey(uuid)) {
+        URI eventUri = existingEventUris.get(uuid);
+        sardine.delete(davConf.getBaseUrl() + eventUri.getPath());
+        log.debug("Deleted outdated event before add: {}", eventUri.getPath());
+      }
+      uploadSingleEvent(sardine, personCal, contact);
+      log.info("Added or updated event for: {}", contact.getFullName());
+    }
   }
 
   private boolean matchCategory(VEvent event) {
@@ -87,7 +155,7 @@ public class CalHandler {
         categories -> categories.getCategories().getTexts().contains(conf.calendarCategory()));
   }
 
-  private @Nullable VEvent convert(DavResource resource) throws IllegalArgumentException {
+  private @Nullable VEvent convert(DavResource resource, Sardine sardine) throws IllegalArgumentException {
     String url = davConf.getBaseUrl() + resource.getHref().getPath();
     try (InputStream inputStream = sardine.get(url)) {
       if (inputStream != null) {
@@ -171,69 +239,6 @@ public class CalHandler {
     return birthdayEvent;
   }
 
-  void syncEventsWithBirthdayChanges(List<Contact> contacts) throws IOException {
-    Map<String, VEvent> existingEvents = new HashMap<>();
-    Map<String, Contact> existingContacts = new HashMap<>();
-    List<DavResource> davResources = sardine.list(davConf.calUrl());
-    Map<String, URI> existingEventUris = new HashMap<>();
-
-    // collecting all events matching the desired category
-    for (DavResource resource : davResources) {
-      if (CALENDAR_CONTENT_TYPE.equalsIgnoreCase(resource.getContentType())) {
-        VEvent event = convert(resource);
-        if (event != null && matchCategory(event)) {
-          String uuid = extractContactsUUIDFromEvent(event);
-          existingEvents.put(uuid, event);
-          String eventId = extractEventId(resource.getHref());
-          existingEventUris.put(eventId, resource.getHref());
-        }
-      }
-    }
-
-    // delete birthday events from contacts whose doesn't exist
-    contacts.forEach(person -> existingContacts.put(createContactIdentifier(person), person));
-    existingEvents.keySet().forEach((eventUuid) -> {
-      if (!existingContacts.containsKey(eventUuid)) {
-        URI eventUri = existingEventUris.get(eventUuid);
-        try {
-          sardine.delete(davConf.getBaseUrl() + eventUri.getPath());
-          log.debug("Deleted outdated event: {}", eventUri.getPath());
-        } catch (IOException e) {
-          log.error("Failed to delete outdated event: {}", eventUri.getPath(), e);
-        }
-      }
-    });
-
-    List<Contact> changedPeople = new ArrayList<>();
-    // collect contacts whose birthday has changed
-    for (Contact contact : contacts) {
-      String uuid = createContactIdentifier(contact);
-      VEvent existingEvent = existingEvents.get(uuid);
-
-      if (existingEvent == null || !isEventUpToDate(existingEvent, contact)) {
-        changedPeople.add(contact);
-        log.debug("New or updated event for: {}", contact.getFullName());
-      }
-    }
-    if (changedPeople.isEmpty()) {
-      log.info("No birthday events to update found. Sync stopped.");
-      return;
-    }
-
-    // process changed or missing birthday event
-    for (Contact contact : changedPeople) {
-      Calendar personCal = buildBirthdayCalendar(contact);
-      String uuid = createContactIdentifier(contact);
-      if (existingEventUris.containsKey(uuid)) {
-        URI eventUri = existingEventUris.get(uuid);
-        sardine.delete(davConf.getBaseUrl() + eventUri.getPath());
-        log.debug("Deleted outdated event before add: {}", eventUri.getPath());
-      }
-      uploadSingleEvent(personCal, contact);
-      log.info("Added or updated event for: {}", contact.getFullName());
-    }
-  }
-
   private String extractContactsUUIDFromEvent(VEvent event) {
     try {
       Property p = event.getProperty(Uid.UID).orElseThrow();
@@ -262,7 +267,7 @@ public class CalHandler {
     return personBirthday.equals(eventBirthday);
   }
 
-  private void uploadSingleEvent(Calendar calendar, Contact contact) throws IOException {
+  private void uploadSingleEvent(Sardine sardine, Calendar calendar, Contact contact) throws IOException {
     String eventContent = calendar.toString();
     String eventUrl = davConf.calUrl() + createContactIdentifier(contact) + ".ics";
     try (InputStream inputStream = new ByteArrayInputStream(

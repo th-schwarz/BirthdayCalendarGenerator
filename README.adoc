@@ -101,6 +101,8 @@ dav:
 - `dav.user`, `dav.password`: Authentication credentials for the dav server.
 - `dav.card-url`: The address book URL from which birthdays are read.
 - `dav.cal-url`: The url of the birthday calendar which must be created. _To be on the safe side, it's a good idea to use an extra birthday calendar! But it is not mandatory since https://github.com/th-schwarz/BirthdayCalendarGenerator/issues/2[A remote event should only be deleted if its categories contain the defined birthday category.]_ was implemented.
+- `dav.delay-in-minutes`: This property determines the delay interval (in minutes) between retries in the event of network problems. The default setting is _1_.
+- `dav.max-trails`: The maximum number of retries due to network errors. The default setting is _5_.
 
 == Start
 

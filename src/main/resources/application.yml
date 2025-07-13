@@ -14,3 +14,7 @@ event:
   description: "Birthday: ~birthday~"
   date-format: yyyy-MM-dd
   alarm: 1d
+
+dav:
+  max-trails: 5
+  delay-in-minutes: 1
