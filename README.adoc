@@ -34,13 +34,17 @@ Successfully tested so far:
 - sogo 5.1.12 (mailcow-dockerized 2024-11b)
 
 == Changelog
-- v2.0.0 +
-  issue#4 implement a sync +
+
+* v2.0.1
+** issue #8 bcg terminates if the connection to the dav server fails
+** issue #9 default of bcg.run-on-start should be false
+* v2.0.0 +
+  issue #4 implement a sync +
   instead of the Brute-Force-Approach
-- v1.2.0 +
-  issue#3 reminder for all birthday events
-- v1.1.0 +
-  issue#2: A remote event should only be deleted if its categories contain the defined birthday category.
+* v1.2.0 +
+  issue #3 reminder for all birthday events
+* v1.1.0 +
+  issue #2: A remote event should only be deleted if its categories contain the defined birthday category.
 
 == Basic Workflow
 
