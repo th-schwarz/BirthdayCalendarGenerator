@@ -13,12 +13,12 @@ Below all default settings are listed.
 
 [source,yaml]
 // include is disabled on github
-// application.yml 2025-06
+// application.yml 2025-07
 ----
 bcg:
   product: BirthdayCalendarGenerator
   calendar-category: Birthday
-  run-on-start: true
+  run-on-start: false
   cron: "0 30 4 * * *"
 
 event:
@@ -26,7 +26,13 @@ event:
   description: "Birthday: ~birthday~"
   date-format: yyyy-MM-dd
   alarm: 1d
+
+dav:
+  max-retries: 5
+  retry-delay-in-minutes: 1
 ----
+
+Application settings:
 
 - `bcg.product`: Name of the product used in the created calendar files, known as 'prodId'.
 - `bcg.calendar-category`: The value depends on the categories of the caldav server and its localization. +
@@ -43,6 +49,11 @@ d=day, h=hours +
 E.g.: _12h_ triggers a notification 12 hours before the birthday event.
 
 The placeholders '&#126;first-name&#126;', '&#126;last-name&#126;' and '&#126;birthday&#126;' are self-explain placeholder that can be used in 'description' and 'summary'.
+
+Dav settings:
+
+- `dav.delay-in-minutes`: This property determines the delay interval (in minutes) between retries in the case of network problems.
+- `dav.retry-delay-in-minutes`: The maximum number of retries due to network errors.
 
 == Individual settings
 
