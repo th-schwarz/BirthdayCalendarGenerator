@@ -24,8 +24,8 @@ class DavConfTest extends AbstractIntegrationTest {
         "https://dav.my-domain.org/SOGo/dav/dav-user/Contacts/personal/",
         davConf.cardUrl()
     );
-    assertEquals(1, davConf.delayInMinutes());
-    assertEquals(5, davConf.maxTrails());
+    assertEquals(1, davConf.retryDelayInMinutes());
+    assertEquals(5, davConf.maxRetries());
   }
 
   @Test

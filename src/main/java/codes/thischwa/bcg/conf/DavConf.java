@@ -11,13 +11,13 @@ import org.springframework.web.util.UriComponentsBuilder;
  * @param password       The password for authentication.
  * @param calUrl         The URL for accessing calendar services.
  * @param cardUrl        The URL for accessing address book services.
- * @param delayInMinutes The delay in minutes for scheduled tasks or updates.
- * @param maxTrails The maximum number of trials for a specific operation.
+ * @param retryDelayInMinutes The delay in minutes for scheduled tasks or updates.
+ * @param maxRetries The maximum number of trials for a specific operation.
  */
 @ConfigurationProperties(prefix = "dav")
 public record DavConf(
-    String user, String password, String calUrl, String cardUrl, Integer delayInMinutes,
-    Integer maxTrails) {
+    String user, String password, String calUrl, String cardUrl, Integer retryDelayInMinutes,
+    Integer maxRetries) {
 
   /**
    * Retrieves the base URL derived from the `cardUrl` property. It removes any path, query,
@@ -32,5 +32,9 @@ public record DavConf(
         .fragment(null)
         .build()
         .toUriString();
+  }
+
+  public long getRetryDelayInMillis() {
+    return retryDelayInMinutes * 60 * 1000;
   }
 }

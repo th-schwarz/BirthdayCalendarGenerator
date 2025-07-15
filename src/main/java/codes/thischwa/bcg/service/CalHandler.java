@@ -81,8 +81,8 @@ public class CalHandler {
   }
 
   void syncEventsWithBirthdayChanges(List<Contact> contacts) throws IOException {
-    if (!sardineInitializer.isAccessible()) {
-      log.error("Access to {} timed out after {} trails.", davConf.getBaseUrl(), davConf.maxTrails());
+    if (!sardineInitializer.canAccessBaseUrl()) {
+      log.error("Access to {} timed out after {} trails.", davConf.getBaseUrl(), davConf.maxRetries());
       throw new IllegalArgumentException("Access to " + davConf.getBaseUrl() + " timed out.");
     }
     Sardine sardine = sardineInitializer.getSardine();

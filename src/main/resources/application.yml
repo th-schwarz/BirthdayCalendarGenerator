@@ -16,5 +16,5 @@ event:
   alarm: 1d
 
 dav:
-  max-trails: 5
-  delay-in-minutes: 1
+  max-retries: 5
+  retry-delay-in-minutes: 1

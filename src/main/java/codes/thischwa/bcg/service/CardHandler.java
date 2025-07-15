@@ -52,8 +52,8 @@ public class CardHandler {
   }
 
   List<Contact> readPeopleWithBirthday() throws IllegalArgumentException {
-    if (!sardineInitializer.isAccessible()) {
-      log.error("Access to {} timed out after {} trails.", davConf.getBaseUrl(), davConf.maxTrails());
+    if (!sardineInitializer.canAccessBaseUrl()) {
+      log.error("Access to {} timed out after {} trails.", davConf.getBaseUrl(), davConf.maxRetries());
       throw new IllegalArgumentException("Access to " + davConf.getBaseUrl() + " timed out.");
     }
     Sardine sardine = sardineInitializer.getSardine();

@@ -29,18 +29,18 @@ public class SardineInitializer {
     CompatibilityHints.setHintEnabled(CompatibilityHints.KEY_RELAXED_VALIDATION, true);
   }
 
-  public boolean isAccessible() {
-    for (int i = 0; i < davConf.maxTrails(); i++) {
+  public boolean canAccessBaseUrl() {
+    for (int i = 0; i < davConf.maxRetries(); i++) {
       try {
         if (sardine.exists(davConf.getBaseUrl())) {
           return true;
         }
       } catch (IOException e) {
         log.warn("Error while checking access to {} (trails: {}/{}): {}", davConf.getBaseUrl(),
-            i + 1, davConf.maxTrails(), e.getMessage());
+            i + 1, davConf.maxRetries(), e.getMessage());
       }
       try {
-        Thread.sleep(davConf.delayInMinutes() * 60 * 1000L);
+        Thread.sleep(davConf.getRetryDelayInMillis());
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
         return false;
