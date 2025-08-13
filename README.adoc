@@ -17,7 +17,7 @@ Before testing BCG, please create a backup of the calendar to be used! It is a g
 == Preface
 
 A few years ago, I set up my own groupware server with SOGO because I wanted to host my private data myself. It uses standard protocols such as CalDAV and CardDAV. Google previously hosted my calendar and address data. When I switched to SOGO, I quickly realized that I was missing a small but crucial function: the birthday calendar! +
-BCG (Birthday Calendar Generator) is a Java Spring Boot application for creating a birthday calendar from address book data. It's based on spring boot 3, that’s why Java 17 or later is required! It  can be executed by `commandline`, `init.d` or `systemd`.
+BCG (Birthday Calendar Generator) is a Java Spring Boot application for creating a birthday calendar from address book data. It's based on spring boot 3, that’s why Java 17 or later is required! It  can be executed by `commandline`, `init.d`, `systemd`, or run in a container via Docker.
 
 If you find a bug or certain features are missing, don’t hesitate to file an issue on https://github.com/th-schwarz/BirthdayCalendarGenerator/issues[Github].
 
@@ -111,6 +111,71 @@ dav:
 == Start
 
 The fully executable jar can be executed in different ways.
+
+=== by Docker
+
+BCG can be run directly from a container image hosted on GitHub Container Registry (GHCR).
+
+[source,bash]
+----
+# Run with configuration file mounted from the host
+docker run --rm \
+  -v /path/to/bcg.yml:/app/bcg.yml:ro \
+  -v /path/to/logback.xml:/app/logback.xml:ro \
+  ghcr.io/th-schwarz/bcg:latest
+----
+
+Replace `/path/to/bcg.yml` and `/path/to/logback.xml` with the absolute paths to your configuration and logging files on the host system.
+
+The `:latest` tag is built from the `main` branch.  
+Images built from other branches are tagged with the branch name in lowercase, with `/` replaced by `-`, for example:
+[source,bash]
+----
+ghcr.io/th-schwarz/bcg:feature-x
+----
+
+If you want the application to run once and exit, you can append:
+[source,bash]
+----
+docker run --rm \
+  -v /path/to/bcg.yml:/app/bcg.yml:ro \
+  -v /path/to/logback.xml:/app/logback.xml:ro \
+  ghcr.io/th-schwarz/bcg:latest --run-once
+----
+
+=== by Docker Compose
+
+You can also run BCG with Docker Compose for easier service management.
+
+[source,yaml]
+----
+version: "3.9"
+
+services:
+  bcg:
+    image: ghcr.io/th-schwarz/bcg:latest   # replace with ghcr.io/th-schwarz/bcg:<branch-name> if needed
+    container_name: bcg
+    restart: unless-stopped
+    volumes:
+      - ./bcg.yml:/app/bcg.yml:ro          # required configuration
+      - ./logback.xml:/app/logback.xml:ro  # optional logging config
+    # command: ["--run-once"]              # uncomment to run once and exit
+    # environment:
+    #   JAVA_TOOL_OPTIONS: -Xms128m -Xmx512m
+    # user: "1000:1000"                    # drop root if desired
+----
+
+Start the service:
+[source,bash]
+----
+docker compose up -d
+----
+
+Run the container once and exit:
+[source,bash]
+----
+docker compose run --rm bcg --run-once
+----
 
 === by Command Line
 
