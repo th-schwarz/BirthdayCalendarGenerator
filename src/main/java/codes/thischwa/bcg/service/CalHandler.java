@@ -16,13 +16,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import lombok.extern.slf4j.Slf4j;
 import net.fortuna.ical4j.data.CalendarBuilder;
 import net.fortuna.ical4j.data.ParserException;
 import net.fortuna.ical4j.model.Calendar;
 import net.fortuna.ical4j.model.Month;
-import net.fortuna.ical4j.model.Property;
 import net.fortuna.ical4j.model.Recur;
 import net.fortuna.ical4j.model.component.CalendarComponent;
 import net.fortuna.ical4j.model.component.VAlarm;
@@ -32,8 +30,6 @@ import net.fortuna.ical4j.model.property.Action;
 import net.fortuna.ical4j.model.property.CalScale;
 import net.fortuna.ical4j.model.property.Categories;
 import net.fortuna.ical4j.model.property.Description;
-import net.fortuna.ical4j.model.property.DtStart;
-import net.fortuna.ical4j.model.property.Method;
 import net.fortuna.ical4j.model.property.ProdId;
 import net.fortuna.ical4j.model.property.RRule;
 import net.fortuna.ical4j.model.property.Status;
@@ -57,7 +53,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class CalHandler {
 
-  private static final String CALENDAR_CONTENT_TYPE = "text/calendar";
+  public static final String CALENDAR_CONTENT_TYPE = "text/calendar";
   private final BcgConf conf;
   private final EventConf eventConf;
   private final DavConf davConf;
@@ -98,16 +94,16 @@ public class CalHandler {
       if (CALENDAR_CONTENT_TYPE.equalsIgnoreCase(resource.getContentType())) {
         VEvent event = convert(resource, sardine);
         if (event != null && matchCategory(event)) {
-          String uuid = extractContactsUUIDFromEvent(event);
+          String uuid = CalUtil.extractContactsUUIDFromEvent(event);
           existingEvents.put(uuid, event);
-          String eventId = extractEventId(resource.getHref());
+          String eventId = CalUtil.extractEventId(resource.getHref());
           existingEventUris.put(eventId, resource.getHref());
         }
       }
     }
 
     // delete birthday events from contacts whose doesn't exist
-    contacts.forEach(person -> existingContacts.put(createContactIdentifier(person), person));
+    contacts.forEach(person -> existingContacts.put(CalUtil.createContactIdentifier(person), person));
     existingEvents.keySet().forEach((eventUuid) -> {
       if (!existingContacts.containsKey(eventUuid)) {
         URI eventUri = existingEventUris.get(eventUuid);
@@ -123,10 +119,10 @@ public class CalHandler {
     List<Contact> changedPeople = new ArrayList<>();
     // collect contacts whose birthday has changed
     for (Contact contact : contacts) {
-      String uuid = createContactIdentifier(contact);
+      String uuid = CalUtil.createContactIdentifier(contact);
       VEvent existingEvent = existingEvents.get(uuid);
 
-      if (existingEvent == null || !isEventUpToDate(existingEvent, contact)) {
+      if (existingEvent == null || !CalUtil.isBirthdayEquals(existingEvent, contact)) {
         changedPeople.add(contact);
         log.debug("New or updated event for: {}", contact.getFullName());
       }
@@ -139,7 +135,7 @@ public class CalHandler {
     // process changed or missing birthday event
     for (Contact contact : changedPeople) {
       Calendar personCal = buildBirthdayCalendar(contact);
-      String uuid = createContactIdentifier(contact);
+      String uuid = CalUtil.createContactIdentifier(contact);
       if (existingEventUris.containsKey(uuid)) {
         URI eventUri = existingEventUris.get(uuid);
         sardine.delete(davConf.getBaseUrl() + eventUri.getPath());
@@ -207,14 +203,13 @@ public class CalHandler {
     Summary summary = buildSummary(contact);
     String description = eventConf.generateDescription(contact);
     VEvent birthdayEvent = new VEvent(contact.birthday(), summary.getValue());
-    birthdayEvent.add(new Uid(createContactIdentifier(contact)));
+    birthdayEvent.add(new Uid(CalUtil.createContactIdentifier(contact)));
 
     // build and add the repetition rule
     Recur<LocalDate> recur = new Recur.Builder<LocalDate>().frequency(Frequency.YEARLY).build();
     recur.getMonthList().add(Month.valueOf(contact.birthday().getMonthValue()));
     recur.getMonthDayList().add(contact.birthday().getDayOfMonth());
     birthdayEvent.add(new RRule<>(recur));
-
 
     if (eventConf.getAlarmDuration() != null) {
       // build and add an alarm
@@ -238,37 +233,9 @@ public class CalHandler {
     return birthdayEvent;
   }
 
-  private String extractContactsUUIDFromEvent(VEvent event) {
-    try {
-      Property p = event.getProperty(Uid.UID).orElseThrow();
-      return p.getValue();
-    } catch (NoSuchElementException e) {
-      throw new IllegalArgumentException(e);
-    }
-  }
-
-  private String extractEventId(URI eventUri) {
-    String path = eventUri.getPath();
-    String[] segments = path.split("/");
-    String fileName = segments[segments.length - 1];
-    return fileName.replace(".ics", "");
-  }
-
-  private String createContactIdentifier(Contact contact) {
-    String uniqueId = contact.getFullName() + "_" + contact.birthday();
-    return uniqueId.replaceAll("[^a-zA-Z0-9]", "_");
-  }
-
-  private boolean isEventUpToDate(VEvent event, Contact contact) {
-    LocalDate personBirthday = contact.birthday();
-    DtStart<LocalDate> dtStart = event.getDateTimeStart();
-    LocalDate eventBirthday = dtStart.getDate();
-    return personBirthday.equals(eventBirthday);
-  }
-
   private void uploadSingleEvent(Sardine sardine, Calendar calendar, Contact contact) throws IOException {
     String eventContent = calendar.toString();
-    String eventUrl = davConf.calUrl() + createContactIdentifier(contact) + ".ics";
+    String eventUrl = davConf.calUrl() + CalUtil.createContactIdentifier(contact) + ".ics";
     try (InputStream inputStream = new ByteArrayInputStream(
         eventContent.getBytes(StandardCharsets.UTF_8))) {
       sardine.put(eventUrl, inputStream);

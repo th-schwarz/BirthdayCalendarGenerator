@@ -59,13 +59,13 @@ public class CardHandler {
     Sardine sardine = sardineInitializer.getSardine();
     List<Contact> contacts = new ArrayList<>();
     try {
-      List<DavResource> addressbookItems = sardine.list(davConf.cardUrl());
+      List<DavResource> addressbookItems = sardine.list(davConf.cardUrl())
+          .stream()
+          .filter(item -> !item.isDirectory())
+          .toList();
       log.info("Contacts found: {}", addressbookItems.size());
 
       for (DavResource davResource : addressbookItems) {
-        if (davResource.isDirectory()) {
-          continue;
-        }
         log.info("Processing contact: {}",
             (davResource.getDisplayName() == null) ? "display name n/a" :
                 davResource.getDisplayName());

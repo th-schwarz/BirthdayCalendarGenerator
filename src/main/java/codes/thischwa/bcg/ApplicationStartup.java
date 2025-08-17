@@ -13,7 +13,7 @@ import org.springframework.util.StringUtils;
 
 /** The ApplicationStartup class processes some tasks if the application is ready to start. */
 @Component
-@Profile("!test")
+@Profile({"!test", "!it-test"})
 @Slf4j
 public class ApplicationStartup implements ApplicationListener<ApplicationReadyEvent> {
 

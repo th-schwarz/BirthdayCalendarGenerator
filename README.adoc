@@ -11,7 +11,9 @@ image:https://img.shields.io/github/license/th-schwarz/BirthdayCalendarGenerator
 
 Give it a try!
 https://github.com/th-schwarz/BirthdayCalendarGenerator/releases[image:https://img.shields.io/github/v/release/th-schwarz/BirthdayCalendarGenerator?include_prereleases[GitHub
-release (latest by date including pre-releases)]]         image:https://img.shields.io/github/downloads/th-schwarz/BirthdayCalendarGenerator/total[GitHub Downloads (all assets, all releases)] +
+release (latest by date including pre-releases)]]         image:https://img.shields.io/github/downloads/th-schwarz/BirthdayCalendarGenerator/total[GitHub Downloads (all assets, all releases)]
+image:https://ghcr-badge.elias.eu.org/shield/th-schwarz/BirthdayCalendarGenerator/bcg[] +
+
 Before testing BCG, please create a backup of the calendar to be used! It is a good idea to use an additional calendar for birthdays.
 
 == Preface
@@ -125,17 +127,17 @@ BCG can be run directly from a container image hosted on GitHub Container Regist
 docker run --rm \
   -v /path/to/bcg.yml:/app/bcg.yml:ro \
   -v /path/to/logback.xml:/app/logback.xml:ro \
-  ghcr.io/th-schwarz/bcg:latest
+  ghcr.io/th-schwarz/bcg:[tagged-version]
 ----
 
 Replace `/path/to/bcg.yml` and `/path/to/logback.xml` with the absolute paths to your configuration and logging files on the host system.
 
-The `:latest` tag is built from the `main` branch.  
-Images built from other branches are tagged with the branch name in lowercase, with `/` replaced by `-`, for example:
-[source,bash]
-----
-ghcr.io/th-schwarz/bcg:feature-x
-----
+Allowed values for `tagged-version`:
+
+- `latest` is built from the `main` branch.
+- `develop` is built from the `develop` branch.
+- `v0.2.0` is built from the tag `v0.2.0`.
+- `feature-xyz` is built from `feature/xyz` branch.
 
 If you want the application to run once and exit, you can append:
 [source,bash]
@@ -152,18 +154,17 @@ You can also run BCG with Docker Compose for easier service management.
 
 [source,yaml]
 ----
-version: "3.9"
-
 services:
   bcg:
-    image: ghcr.io/th-schwarz/bcg:latest   # replace with ghcr.io/th-schwarz/bcg:<branch-name> if needed
+    image: ghcr.io/th-schwarz/bcg:latest   # replace with ghcr.io/th-schwarz/bcg:<tag-name> if needed
     container_name: bcg
     restart: unless-stopped
     volumes:
       - ./bcg.yml:/app/bcg.yml:ro          # required configuration
       - ./logback.xml:/app/logback.xml:ro  # optional logging config
     # command: ["--run-once"]              # uncomment to run once and exit
-    # environment:
+    environment:
+      - LOGGING_CONFIG=/app/logback.xml    # required configuration
     #   JAVA_TOOL_OPTIONS: -Xms128m -Xmx512m
     # user: "1000:1000"                    # drop root if desired
 ----

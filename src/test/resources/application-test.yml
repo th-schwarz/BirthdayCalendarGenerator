@@ -1,3 +1,7 @@
+spring:
+  config:
+    import:
+
 bcg:
   product: BirthdayCalendarGenerator
   calendar-category: Birthday
