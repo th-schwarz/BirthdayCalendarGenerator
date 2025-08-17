@@ -136,6 +136,7 @@ Images built from other branches are tagged with the branch name in lowercase, w
 ----
 ghcr.io/th-schwarz/bcg:feature-x
 ----
+Branch ´feature/x`is tagged as `feature-x`.
 
 If you want the application to run once and exit, you can append:
 [source,bash]
@@ -152,18 +153,17 @@ You can also run BCG with Docker Compose for easier service management.
 
 [source,yaml]
 ----
-version: "3.9"
-
 services:
   bcg:
-    image: ghcr.io/th-schwarz/bcg:latest   # replace with ghcr.io/th-schwarz/bcg:<branch-name> if needed
+    image: ghcr.io/th-schwarz/bcg:latest   # replace with ghcr.io/th-schwarz/bcg:<tag-name> if needed
     container_name: bcg
     restart: unless-stopped
     volumes:
       - ./bcg.yml:/app/bcg.yml:ro          # required configuration
       - ./logback.xml:/app/logback.xml:ro  # optional logging config
     # command: ["--run-once"]              # uncomment to run once and exit
-    # environment:
+    environment:
+      - LOGGING_CONFIG=/app/logback.xml    # required configuration
     #   JAVA_TOOL_OPTIONS: -Xms128m -Xmx512m
     # user: "1000:1000"                    # drop root if desired
 ----
