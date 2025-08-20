@@ -125,18 +125,17 @@ BCG can be run directly from a container image hosted on GitHub Container Regist
 docker run --rm \
   -v /path/to/bcg.yml:/app/bcg.yml:ro \
   -v /path/to/logback.xml:/app/logback.xml:ro \
-  ghcr.io/th-schwarz/bcg:latest
+  ghcr.io/th-schwarz/bcg:[tagged-version]
 ----
 
 Replace `/path/to/bcg.yml` and `/path/to/logback.xml` with the absolute paths to your configuration and logging files on the host system.
 
-The `:latest` tag is built from the `main` branch.  
-Images built from other branches are tagged with the branch name in lowercase, with `/` replaced by `-`, for example:
-[source,bash]
-----
-ghcr.io/th-schwarz/bcg:feature-x
-----
-Branch `feature/x` is tagged as `feature-x`.
+Allowed values for `tagged-version`:
+
+- `latest` is built from the `main` branch.
+- `develop` is built from the `develop` branch.
+- `v0.2.0` is built from the tag `v0.2.0`.
+- `feature-xyz` is built from `feature/xyz` branch.
 
 If you want the application to run once and exit, you can append:
 [source,bash]
