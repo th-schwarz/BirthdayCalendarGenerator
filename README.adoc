@@ -11,7 +11,9 @@ image:https://img.shields.io/github/license/th-schwarz/BirthdayCalendarGenerator
 
 Give it a try!
 https://github.com/th-schwarz/BirthdayCalendarGenerator/releases[image:https://img.shields.io/github/v/release/th-schwarz/BirthdayCalendarGenerator?include_prereleases[GitHub
-release (latest by date including pre-releases)]]         image:https://img.shields.io/github/downloads/th-schwarz/BirthdayCalendarGenerator/total[GitHub Downloads (all assets, all releases)] +
+release (latest by date including pre-releases)]]         image:https://img.shields.io/github/downloads/th-schwarz/BirthdayCalendarGenerator/total[GitHub Downloads (all assets, all releases)]
+image:https://ghcr-badge.elias.eu.org/shield/th-schwarz/BirthdayCalendarGenerator/bcg[] +
+
 Before testing BCG, please create a backup of the calendar to be used! It is a good idea to use an additional calendar for birthdays.
 
 == Preface
