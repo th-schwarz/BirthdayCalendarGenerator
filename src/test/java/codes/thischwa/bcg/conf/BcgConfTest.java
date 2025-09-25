@@ -1,13 +1,13 @@
 package codes.thischwa.bcg.conf;
 
-import codes.thischwa.bcg.AbstractIntegrationTest;
+import codes.thischwa.bcg.AbstractTest;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class BcgConfTest extends AbstractIntegrationTest {
+class BcgConfTest extends AbstractTest {
 
     @Autowired
     private BcgConf bcgConf;

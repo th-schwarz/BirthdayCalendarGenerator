@@ -1,6 +1,6 @@
 package codes.thischwa.bcg.conf;
 
-import codes.thischwa.bcg.AbstractIntegrationTest;
+import codes.thischwa.bcg.AbstractTest;
 import codes.thischwa.bcg.Contact;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class EventConfTest extends AbstractIntegrationTest {
+class EventConfTest extends AbstractTest {
 
   @Autowired
   private EventConf eventConf;
