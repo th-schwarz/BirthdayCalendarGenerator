@@ -2,6 +2,8 @@ package codes.thischwa.bcg;
 
 import lombok.extern.slf4j.Slf4j;
 
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.context.DynamicPropertyRegistry;
