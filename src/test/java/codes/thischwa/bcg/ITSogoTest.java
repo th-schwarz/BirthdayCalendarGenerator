@@ -8,7 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 @Slf4j
-class SogoTest extends AbstractIntegrationTest {
+class ITSogoTest extends AbstractIntegrationTest {
 
   private static final String DAV_USER = System.getenv("SOGO_DAV_USER");
   private static final String DAV_PASS = System.getenv("SOGO_DAV_PASS");
