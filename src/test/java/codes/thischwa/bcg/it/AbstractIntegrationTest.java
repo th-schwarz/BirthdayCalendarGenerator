@@ -1,5 +1,7 @@
-package codes.thischwa.bcg;
+package codes.thischwa.bcg.it;
 
+import codes.thischwa.bcg.Contact;
+import codes.thischwa.bcg.TestTypeProfileResolver;
 import codes.thischwa.bcg.conf.BcgConf;
 import codes.thischwa.bcg.conf.DavConf;
 import codes.thischwa.bcg.service.BirthdayCalGenerator;

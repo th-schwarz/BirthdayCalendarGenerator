@@ -1,5 +1,7 @@
 package codes.thischwa.bcg;
 
+import codes.thischwa.bcg.it.AbstractIntegrationTest;
+
 import org.springframework.test.context.ActiveProfilesResolver;
 
 /**
