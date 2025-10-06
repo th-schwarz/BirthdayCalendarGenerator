@@ -20,6 +20,7 @@ import net.fortuna.ical4j.model.component.CalendarComponent;
 import net.fortuna.ical4j.model.component.VEvent;
 import net.fortuna.ical4j.model.property.DtStart;
 import net.fortuna.ical4j.model.property.Uid;
+
 import static codes.thischwa.bcg.service.CalHandler.CALENDAR_CONTENT_TYPE;
 
 import org.springframework.lang.Nullable;
@@ -77,12 +78,12 @@ public class CalUtil {
   }
 
   public static Map<VEvent, URL> collectBirthdayEvents(Sardine sardine, String calUrl)
-    throws IOException {
+      throws IOException {
     Map<VEvent, URL> events = new HashMap<>();
     List<DavResource> davResources = sardine.list(calUrl);
     davResources = davResources.stream().filter(e -> !e.isDirectory()).toList();
     for (DavResource davResource : davResources) {
-      if (CALENDAR_CONTENT_TYPE.equalsIgnoreCase(davResource.getContentType())) {
+      if (davResource.getContentType().contains(CALENDAR_CONTENT_TYPE)) {
         URL eventUrl = new URL(NetUtil.getBaseUrl(calUrl) + davResource.getHref().getPath());
         VEvent event = convert(sardine, eventUrl);
         events.put(event, eventUrl);
@@ -92,7 +93,7 @@ public class CalUtil {
   }
 
   public static @Nullable VEvent convert(Sardine sardine, URL eventUrl)
-    throws IllegalArgumentException {
+      throws IllegalArgumentException {
     try (InputStream inputStream = sardine.get(eventUrl.toString())) {
       if (inputStream != null) {
         // Parse the iCalendar content
@@ -100,8 +101,8 @@ public class CalUtil {
         Calendar calendar = builder.build(inputStream);
         if (calendar.getComponents().size() != 1) {
           throw new IllegalArgumentException(
-            "Unexpected number of calendar components: " + calendar.getComponents().size() +
-              " for URL: " + eventUrl + " (expected: 1)");
+              "Unexpected number of calendar components: " + calendar.getComponents().size() +
+                  " for URL: " + eventUrl + " (expected: 1)");
         }
 
         CalendarComponent component = calendar.getComponents().get(0);
