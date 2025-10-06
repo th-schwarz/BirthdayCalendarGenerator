@@ -40,7 +40,7 @@ public class BirthdayCalGenerator {
    */
   public void processBirthdayEvents() throws IOException {
     log.info("Syncing birthday events ...");
-    List<Contact> people = cardHandler.readPeopleWithBirthday();
+    List<Contact> people = cardHandler.readContactsWithBirthday();
     calHandler.syncEventsWithBirthdayChanges(people);
     log.info("Synced birthday events successfully.");
   }

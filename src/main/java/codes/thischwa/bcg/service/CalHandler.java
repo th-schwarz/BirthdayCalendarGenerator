@@ -94,7 +94,7 @@ public class CalHandler {
     }
 
     // delete birthday events from contacts whose doesn't exist
-    contacts.forEach(person -> existingContacts.put(CalUtil.createContactIdentifier(person), person));
+    contacts.forEach(contact -> existingContacts.put(contact.identifier(), contact));
     existingEvents.keySet().forEach((eventUuid) -> {
       if (!existingContacts.containsKey(eventUuid)) {
         URL eventUri = existingEventUris.get(eventUuid);
@@ -110,8 +110,7 @@ public class CalHandler {
     List<Contact> changedPeople = new ArrayList<>();
     // collect contacts whose birthday has changed
     for (Contact contact : contacts) {
-      String uuid = CalUtil.createContactIdentifier(contact);
-      VEvent existingEvent = existingEvents.get(uuid);
+      VEvent existingEvent = existingEvents.get(contact.identifier());
 
       if (existingEvent == null || !CalUtil.isBirthdayEquals(existingEvent, contact)) {
         changedPeople.add(contact);
@@ -126,7 +125,10 @@ public class CalHandler {
     // process changed or missing birthday event
     for (Contact contact : changedPeople) {
       Calendar personCal = buildBirthdayCalendar(contact);
-      String uuid = CalUtil.createContactIdentifier(contact);
+      String uuid = contact.identifier();
+      if (uuid == null) {
+        throw new IllegalArgumentException("Contact identifier must not be null.");
+      }
       if (existingEventUris.containsKey(uuid)) {
         URL eventUri = existingEventUris.get(uuid);
         sardine.delete(davConf.getBaseUrl() + eventUri.getPath());
@@ -165,7 +167,7 @@ public class CalHandler {
     Summary summary = buildSummary(contact);
     String description = eventConf.generateDescription(contact);
     VEvent birthdayEvent = new VEvent(contact.birthday(), summary.getValue());
-    birthdayEvent.add(new Uid(CalUtil.createContactIdentifier(contact)));
+    birthdayEvent.add(new Uid(contact.identifier()));
 
     // build and add the repetition rule
     Recur<LocalDate> recur = new Recur.Builder<LocalDate>().frequency(Frequency.YEARLY).build();
@@ -197,7 +199,7 @@ public class CalHandler {
 
   private void uploadSingleEvent(Sardine sardine, Calendar calendar, Contact contact) throws IOException {
     String eventContent = calendar.toString();
-    String eventUrl = davConf.calUrl() + CalUtil.createContactIdentifier(contact) + ".ics";
+    String eventUrl = davConf.calUrl() + contact.identifier();
     try (InputStream inputStream = new ByteArrayInputStream(
         eventContent.getBytes(StandardCharsets.UTF_8))) {
       sardine.put(eventUrl, inputStream);

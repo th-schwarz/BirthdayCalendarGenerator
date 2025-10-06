@@ -8,7 +8,6 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URI;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -31,9 +30,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class CardHandler {
 
-  private static final DateTimeFormatter birthdayFormatter =
-      DateTimeFormatter.ofPattern("yyyyMMdd");
-
   private final DavConf davConf;
   private final SardineInitializer sardineInitializer;
 
@@ -51,44 +47,36 @@ public class CardHandler {
     this.davConf = davConf;
   }
 
-  List<Contact> readPeopleWithBirthday() throws IllegalArgumentException {
+  List<Contact> readContactsWithBirthday() throws IllegalArgumentException {
     if (!sardineInitializer.canAccessBaseUrl()) {
-      log.error("Access to {} timed out after {} trails.", davConf.getBaseUrl(), davConf.maxRetries());
+      log.error("Access to {} timed out after {} trails.", davConf.getBaseUrl(),
+          davConf.maxRetries());
       throw new IllegalArgumentException("Access to " + davConf.getBaseUrl() + " timed out.");
     }
     Sardine sardine = sardineInitializer.getSardine();
     List<Contact> contacts = new ArrayList<>();
     try {
-      List<DavResource> addressbookItems = sardine.list(davConf.cardUrl())
+      List<DavResource> vcardResources = sardine.list(davConf.cardUrl())
           .stream()
           .filter(item -> !item.isDirectory())
           .toList();
-      log.info("Contacts found: {}", addressbookItems.size());
+      log.info("Contacts found: {}", vcardResources.size());
 
-      for (DavResource davResource : addressbookItems) {
+      for (DavResource davResource : vcardResources) {
         log.info("Processing contact: {}",
-            (davResource.getDisplayName() == null) ? "display name n/a" :
+            (davResource.getDisplayName() == null ||
+                davResource.getDisplayName().isEmpty()) ?
+                davResource.toString() :
                 davResource.getDisplayName());
         URI href = new URI(davConf.getBaseUrl() + davResource.getHref().toString());
         try (InputStream vCardStream = sardine.get(href.toString())) {
           byte[] vcfContent = IOUtils.toByteArray(vCardStream);
-          VCardBuilder cardBuilder = new VCardBuilder(new ByteArrayInputStream(vcfContent));
+          VCardBuilder cardBuilder =
+              new VCardBuilder(new ByteArrayInputStream(vcfContent));
           VCard card = cardBuilder.build();
-          PropertyList propertyList = card.getEntities().get(0).getPropertyList();
-          Optional<BDay<LocalDate>> optBday = propertyList.getFirst(BDay.class.getSimpleName());
-          BDay<LocalDate> birthday =
-              optBday.orElseThrow(() -> new IllegalArgumentException("Missing birthday"));
-
-          Optional<Fn> optFn = propertyList.getFirst(Fn.class.getSimpleName());
-          Optional<N> optName = propertyList.getFirst(N.class.getSimpleName());
-
-          String displayName = optFn.isPresent() ? optFn.get().getValue() : "";
-          N fullName = optName.orElseThrow(() -> new IllegalArgumentException("Missing name"));
-
-          String firstName = fullName.getGivenName();
-          String lastName = fullName.getFamilyName();
-          contacts.add(new Contact(firstName, lastName, displayName,
-              LocalDate.parse(birthday.getValue(), birthdayFormatter)));
+          String identifier = CalUtil.extractEventId(href.toURL());
+          Contact contact = CardUtil.convert(card, identifier);
+          contacts.add(contact);
         } catch (IllegalArgumentException e) {
           log.warn("Error while processing contact {}: {}", davResource.getDisplayName(),
               e.getMessage());

@@ -13,21 +13,18 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
-import net.fortuna.ical4j.data.CalendarBuilder;
-import net.fortuna.ical4j.model.Calendar;
-import net.fortuna.ical4j.model.Content;
 import net.fortuna.ical4j.model.component.VEvent;
-import net.fortuna.ical4j.model.property.Categories;
-import net.fortuna.ical4j.model.property.Uid;
+
 import static codes.thischwa.bcg.service.CalHandler.CALENDAR_CONTENT_TYPE;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
@@ -53,10 +50,10 @@ public abstract class AbstractIntegrationTest {
   protected SardineInitializer sardineInitializer;
 
   private final Contact janeWithBirthDay = new Contact("Jane", "Doe", "J. Doe",
-      LocalDate.of(1990, 5, 12));
-  private final Contact johnWithBDay = new Contact("John", "Smith", "J. Smith",
-      LocalDate.of(1985, 11, 3));
-  private final Contact richard = new Contact("Richard", "Smith", "R. Smith", null);
+      LocalDate.of(1990, 5, 12), "c1-jane");
+  private final Contact johnWithBirthday = new Contact("John", "Smith", "J. Smith",
+      LocalDate.of(1985, 11, 3), "c2-john");
+  private final Contact richard = new Contact("Richard", "Smith", "R. Smith", null, "c3-richard");
 
   void syncAndVerify() throws Exception {
     Sardine sardine = sardineInitializer.getSardine();
@@ -77,14 +74,14 @@ public abstract class AbstractIntegrationTest {
       .filter(e -> e.getSummary().getValue().contains("John"))
       .findFirst()
       .orElseThrow(() -> new AssertionError("John Smith's birthday event not found"));
-    assertTrue(dateEquals(bdEvent, johnWithBDay.birthday()), "John Smith's birthday event should reflect the birthday");
+    assertTrue(dateEquals(bdEvent, johnWithBirthday.birthday()), "John Smith's birthday event should reflect the birthday");
 
     // 5) Change the birthday of one contact and verify
     log.info("Step 5: Changing Jane Doe's birthday and re-synchronizing");
     LocalDate janeNewBday = janeWithBirthDay.birthday().plusDays(1);
     Contact janeUpdated = new Contact(janeWithBirthDay.firstName(), janeWithBirthDay.lastName(),
         janeWithBirthDay.displayName(), janeNewBday);
-    putVCard(davConf.cardUrl() + "c1.vcf", buildVCard(janeUpdated));
+    putVCard(davConf.cardUrl() + janeWithBirthDay.identifier(), buildVCard(janeUpdated));
     generator.processBirthdayEvents();
     List<VEvent> eventsAfterChange = listBirthdayEvents(sardine);
     assertEquals(2, eventsAfterChange.size(), "Expected exactly 2 birthday events");
@@ -96,7 +93,7 @@ public abstract class AbstractIntegrationTest {
 
     // 6) Delete a contact with a birthday and verify event removal
     log.info("Step 6: Deleting John Smith contact and re-synchronizing");
-    sardine.delete(davConf.cardUrl() + "c2.vcf");
+    sardine.delete(davConf.cardUrl() + johnWithBirthday.identifier());
     generator.processBirthdayEvents();
 
     List<VEvent> eventsAfterDeletion = listBirthdayEvents(sardine);
@@ -123,24 +120,22 @@ public abstract class AbstractIntegrationTest {
     clearRemoteCalendar();
 
     log.info("Step 3: Adding contacts (2 with birthdays, 1 without)");
-    putVCard(davConf.cardUrl() + "c1.vcf", buildVCard(janeWithBirthDay));
-    putVCard(davConf.cardUrl() + "c2.vcf", buildVCard(johnWithBDay));
-    putVCard(davConf.cardUrl() + "c3.vcf", buildVCard(richard));
+    putVCard(davConf.cardUrl() + janeWithBirthDay.identifier(), buildVCard(janeWithBirthDay));
+    putVCard(davConf.cardUrl() + johnWithBirthday.identifier(), buildVCard(johnWithBirthday));
+    putVCard(davConf.cardUrl() + richard.identifier(), buildVCard(richard));
   }
 
   private String buildVCard(Contact contact) {
     List<String> lines = new ArrayList<>();
     lines.add("BEGIN:VCARD");
     lines.add("VERSION:3.0");
-    if (contact.birthday() != null) {
-      lines.add("UID:" + CalUtil.createContactIdentifier(contact));
-    }
     lines.add("N:" + contact.lastName() + ";" + contact.firstName() + ";;;");
     lines.add("FN:" + contact.displayName());
     LocalDate bday = contact.birthday();
     if (bday != null) {
       String val = String.format("%04d%02d%02d", bday.getYear(), bday.getMonthValue(), bday.getDayOfMonth());
       lines.add("BDAY:" + val);
+      lines.add("UID:" + contact.identifier());
     }
     lines.add("END:VCARD");
     return String.join("\n", lines);
@@ -214,27 +209,9 @@ public abstract class AbstractIntegrationTest {
     }
   }
 
-  private List<VEvent> listBirthdayEvents(Sardine sardine) throws Exception {
-    List<VEvent> events = new ArrayList<>();
-    List<DavResource> items = sardine.list(davConf.calUrl());
-    for (DavResource res : items) {
-      if (res.isDirectory()) continue;
-      String url = davConf.getBaseUrl() + res.getHref().getPath();
-      try (InputStream is = sardine.get(url)) {
-        CalendarBuilder builder = new CalendarBuilder();
-        Calendar cal = builder.build(Objects.requireNonNull(is));
-        cal.getComponents().forEach(c -> {
-          if (c instanceof VEvent ev) {
-            boolean isBirthdayCategory = ev.getProperty(Categories.CATEGORIES)
-                .map(Content::getValue).map(bcgConf.calendarCategory()::equals).orElse(false);
-            if (isBirthdayCategory) {
-              events.add(ev);
-            }
-          }
-        });
-      }
-    }
-    log.info("Found {} birthday events.", events.size());
-    return events;
+  private List<VEvent> listBirthdayEvents(Sardine sardine) throws IOException {
+    Map<VEvent, URL> eventUrls = CalUtil.collectBirthdayEvents(sardine, davConf.calUrl());
+    log.debug("Found {} birthday events.", eventUrls.size());
+    return new ArrayList<>(eventUrls.keySet());
   }
 }

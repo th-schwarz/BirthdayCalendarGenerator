@@ -20,6 +20,7 @@ import net.fortuna.ical4j.model.component.CalendarComponent;
 import net.fortuna.ical4j.model.component.VEvent;
 import net.fortuna.ical4j.model.property.DtStart;
 import net.fortuna.ical4j.model.property.Uid;
+
 import static codes.thischwa.bcg.service.CalHandler.CALENDAR_CONTENT_TYPE;
 
 import org.springframework.lang.Nullable;
@@ -58,30 +59,14 @@ public class CalUtil {
    */
   public static String extractEventId(URL inputUrl) {
     String path = inputUrl.getPath();
-    String[] segments = path.split("/");
-    String fileName = segments[segments.length - 1];
+    String fileName = path.substring(path.lastIndexOf('/') + 1);
     return fileName.replace(".ics", "");
-  }
-
-  /**
-   * Creates a unique identifier for a contact by concatenating the contact's full name
-   * and birthday, replacing any non-alphanumeric characters with underscores.
-   *
-   * @param contact the Contact object for which the identifier is to be created
-   * @return a sanitized string representing the unique identifier for the contact
-   */
-  public static String createContactIdentifier(Contact contact) {
-    if (contact.birthday() == null) {
-      throw new IllegalArgumentException("Contact birthday must not be null in this context.");
-    }
-    String uniqueId = contact.getFullName() + "_" + contact.birthday();
-    return uniqueId.replaceAll("[^a-zA-Z0-9]", "_");
   }
 
   /**
    * Checks if the specified event corresponds to the contact's birthday.
    *
-   * @param bdEvent   the VEvent object to be checked
+   * @param bdEvent the VEvent object to be checked
    * @param contact the Contact object whose birthday is to be compared against the event
    * @return true if the event date matches the contact's birthday, false otherwise
    */
@@ -93,12 +78,12 @@ public class CalUtil {
   }
 
   public static Map<VEvent, URL> collectBirthdayEvents(Sardine sardine, String calUrl)
-    throws IOException {
+      throws IOException {
     Map<VEvent, URL> events = new HashMap<>();
     List<DavResource> davResources = sardine.list(calUrl);
     davResources = davResources.stream().filter(e -> !e.isDirectory()).toList();
     for (DavResource davResource : davResources) {
-      if (CALENDAR_CONTENT_TYPE.equalsIgnoreCase(davResource.getContentType())) {
+      if (davResource.getContentType().contains(CALENDAR_CONTENT_TYPE)) {
         URL eventUrl = new URL(NetUtil.getBaseUrl(calUrl) + davResource.getHref().getPath());
         VEvent event = convert(sardine, eventUrl);
         events.put(event, eventUrl);
@@ -107,7 +92,8 @@ public class CalUtil {
     return events;
   }
 
-  public static @Nullable VEvent convert(Sardine sardine, URL eventUrl) throws IllegalArgumentException {
+  public static @Nullable VEvent convert(Sardine sardine, URL eventUrl)
+      throws IllegalArgumentException {
     try (InputStream inputStream = sardine.get(eventUrl.toString())) {
       if (inputStream != null) {
         // Parse the iCalendar content
