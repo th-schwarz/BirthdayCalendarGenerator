@@ -11,7 +11,7 @@
 
     <groupId>codes.thischwa</groupId>
     <artifactId>bcg</artifactId>
-    <version>3.0.0</version>
+    <version>3.0.1-SNAPSHOT</version>
 
     <name>Birthday Calendar Generator</name>
 
@@ -23,7 +23,7 @@
     <scm>
         <developerConnection>scm:git:git@github.com:th-schwarz/BirthdayCalendarGenerator</developerConnection>
         <connection>scm:git:git@github.com:th-schwarz/BirthdayCalendarGenerator</connection>
-        <tag>v3.0.0</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <properties>
