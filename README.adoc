@@ -37,6 +37,9 @@ Successfully tested so far:
 
 == Changelog
 
+* v3.0.0 +
+Fixed an issue with reading birthday events for some dav backends e.g. Baikal.
+** issue #14 improve sync
 * v2.0.2
 ** issue #10 Docker support: any plan to release an image or accept PRs for a Dockerfile + CI?
 ** issue #12 The 'method' property for a calendar object causes an exception in Baikal
