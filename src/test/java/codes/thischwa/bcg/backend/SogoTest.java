@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -37,6 +38,7 @@ class SogoTest extends AbstractBackendTest {
   }
 
   @Test
+  @DisplayName("SOGo end-to-end test")
   void completeProcess() throws Exception {
     log.info("Starting SOGo end-to-end test using env-configured CardDAV/CalDAV endpoints ...");
     prepareRemote();

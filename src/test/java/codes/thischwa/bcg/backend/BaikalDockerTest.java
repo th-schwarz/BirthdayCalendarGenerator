@@ -1,6 +1,7 @@
 package codes.thischwa.bcg.backend;
 
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeAll;
 import org.testcontainers.containers.GenericContainer;
@@ -36,6 +37,7 @@ public class BaikalDockerTest extends AbstractBackendTest {
   }
 
   @Test
+  @DisplayName("BAIKAL end-to-end test")
   void completeProcess() throws Exception {
     log.info("Starting BAIKAL end-to-end test using env-configured CardDAV/CalDAV endpoints ...");
     prepareRemote();
