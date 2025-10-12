@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import codes.thischwa.bcg.Contact;
+import codes.thischwa.bcg.TestBcgApp;
 import codes.thischwa.bcg.conf.BcgConf;
 import codes.thischwa.bcg.conf.DavConf;
 import codes.thischwa.bcg.service.BirthdayCalGenerator;
@@ -33,7 +34,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
-@SpringBootTest
+@SpringBootTest(classes = TestBcgApp.class)
 @ActiveProfiles("backend-test")
 @Slf4j
 public abstract class AbstractBackendTest {
@@ -106,7 +107,7 @@ public abstract class AbstractBackendTest {
       eventsAfterDeletion.stream().anyMatch(e -> e.getSummary().getValue().contains("Jane"));
     assumeTrue(janeEventStillExists, "Jane Doe's birthday event should still exist");
 
-    log.info("All steps completed successfully.");
+    log.info("*** All steps completed successfully for: {}", this.getClass().getSimpleName());
   }
 
   private boolean dateEquals(VEvent bdEvent, LocalDate dtStart) {

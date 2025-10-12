@@ -1,4 +1,4 @@
-name: Backend Tests with backend-test Profile
+name: Backend Tests
 
 on:
   workflow_dispatch:

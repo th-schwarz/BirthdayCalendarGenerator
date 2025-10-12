@@ -38,7 +38,6 @@ class BaikalLocalTest extends AbstractBackendTest {
   }
 
   @Test
-  @Disabled("Only for local testing")
   void completeProcess() throws Exception {
     log.info("Starting BAIKAL end-to-end test using env-configured CardDAV/CalDAV endpoints ...");
     prepareRemote();
