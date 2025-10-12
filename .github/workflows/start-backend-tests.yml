@@ -24,7 +24,7 @@ jobs:
         restore-keys: maven
         
     - name: Run Integration Tests
-      run: mvn clean verify -Dspring-boot.run.profiles=backend-test
+      run: mvn clean verify
       env:
         SOGO_DAV_USER: ${{ secrets.SOGO_DAV_USER }}
         SOGO_DAV_PASS: ${{ secrets.SOGO_DAV_PASS }}
