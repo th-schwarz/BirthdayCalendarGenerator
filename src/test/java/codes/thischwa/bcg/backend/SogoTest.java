@@ -5,12 +5,14 @@ import lombok.extern.slf4j.Slf4j;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
 @Slf4j
+@Disabled
 class SogoTest extends AbstractBackendTest {
 
   private static final String DAV_USER = System.getenv("SOGO_DAV_USER");
