@@ -1,14 +1,14 @@
 package codes.thischwa.bcg.backend;
 
-import java.time.Duration;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.ClassRule;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeAll;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.Network;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.containers.wait.strategy.Wait;
@@ -25,20 +25,10 @@ public class BaikalDockerTest extends AbstractBackendTest {
 
   private static String BASE_URL;
 
-  private static Network network = Network.newNetwork();
-
+  // Baikal runs on port 80 in the container
   @Container
-  private static GenericContainer<?> baikal = new GenericContainer<>("thschwarz/baikal:latest")
-      .withExposedPorts(80)
-      .withNetwork(network)
-      .withCreateContainerCmdModifier(cmd ->
-          cmd.getHostConfig().withShmSize(128 * 1024 * 1024L)
-      )
-      .waitingFor(
-          Wait.forHttp("/dav.php/").forStatusCode(200)
-              .withStartupTimeout(Duration.ofSeconds(120))
-      );
-
+  public static GenericContainer<?> baikal = new GenericContainer<>("thschwarz/baikal:latest")
+      .withExposedPorts(80);
 
   @BeforeAll
   public static void testBaikalIsRunning() throws IOException {
