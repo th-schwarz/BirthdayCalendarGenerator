@@ -1,4 +1,4 @@
-name: Backend Tests
+name: Build Backend Integration Tests
 
 on:
   workflow_dispatch:
@@ -7,7 +7,6 @@ jobs:
   backend-tests:
     runs-on: ubuntu-latest
 
-    # Testcontainers benötigt Zugriff auf Docker — wir laufen also auf der VM direkt (kein container:)
     permissions:
       contents: read
 
@@ -17,7 +16,7 @@ jobs:
       - name: Set up Docker
         uses: docker/setup-docker-action@v4
         with:
-          version: '27.0.3' # oder aktuellste stabile Version
+          version: '27.0.3'
 
       - name: Verify Docker works
         run: docker version
