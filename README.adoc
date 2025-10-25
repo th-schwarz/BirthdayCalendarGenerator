@@ -33,7 +33,7 @@ All backend tests: image:https://github.com/th-schwarz/BirthdayCalendarGenerator
 
 Single backend tests:
 
-* image:https://github.com/th-schwarz/BirthdayCalendarGenerator/actions/workflows/backend-baikal.yml/badge.svg["GitHub CI Baikal Backend Tests",link="https://github.com/th-schwarz/BirthdayCalendarGenerator/actions/workflows/backend-tests.yml"]
+* image:https://github.com/th-schwarz/BirthdayCalendarGenerator/actions/workflows/backend-baikal.yml/badge.svg["GitHub CI Baikal Backend Tests",link="https://github.com/th-schwarz/BirthdayCalendarGenerator/actions/workflows/backend-baikal.yml"]
 * image:https://github.com/th-schwarz/BirthdayCalendarGenerator/actions/workflows/backend-sogo.yml/badge.svg["GitHub CI Sogo Backend Tests",link="https://github.com/th-schwarz/BirthdayCalendarGenerator/actions/workflows/backend-sogo.yml"]
 
 == Changelog
