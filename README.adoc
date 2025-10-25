@@ -16,7 +16,7 @@ image:https://ghcr-badge.elias.eu.org/shield/th-schwarz/BirthdayCalendarGenerato
 
 == Preface
 
-BirthdayCalendarGenerator (BCG): A Java Spring Boot application that creates and synchronizes birthday calendars from CardDAV address book data. BCG automatically generates recurring birthday events and maintains them through scheduled synchronization with CalDAV servers like SOGO and Baikal. Supports deployment via `command line`, `systemd`, `init.d`, or `Docker containers`.
+BirthdayCalendarGenerator (BCG): A Java Spring Boot application that creates and synchronizes a birthday calendar from CardDAV address book data. BCG automatically generates recurring birthday events and maintains them through scheduled synchronization with CalDAV servers like SOGO and Baikal. Supports deployment via `command line`, `systemd`, `init.d`, or `Docker containers`.
 
 Features:
 
