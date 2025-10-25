@@ -1,4 +1,4 @@
-name: Baikal Backend Tests
+name: Start Backend Baikal Tests
 
 on:
   workflow_dispatch:
