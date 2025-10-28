@@ -82,7 +82,7 @@ public abstract class AbstractBackendTest {
     log.info("Step 5: Changing Jane Doe's birthday and re-synchronizing");
     LocalDate janeNewBday = janeWithBirthDay.birthday().plusDays(1);
     Contact janeUpdated = new Contact(janeWithBirthDay.firstName(), janeWithBirthDay.lastName(),
-        janeWithBirthDay.displayName(), janeNewBday);
+        janeWithBirthDay.displayName(), janeNewBday, janeWithBirthDay.identifier());
     putVCard(davConf.cardUrl() + janeWithBirthDay.identifier(), buildVCard(janeUpdated));
     generator.processBirthdayEvents();
     List<VEvent> eventsAfterChange = listBirthdayEvents(sardine);
@@ -135,13 +135,14 @@ public abstract class AbstractBackendTest {
     List<String> lines = new ArrayList<>();
     lines.add("BEGIN:VCARD");
     lines.add("VERSION:3.0");
+    String uid = contact.identifier().replace(".vcf", "");
+    lines.add("UID:" + uid);
     lines.add("N:" + contact.lastName() + ";" + contact.firstName() + ";;;");
     lines.add("FN:" + contact.displayName());
     LocalDate bday = contact.birthday();
     if (bday != null) {
       String val = String.format("%04d%02d%02d", bday.getYear(), bday.getMonthValue(), bday.getDayOfMonth());
       lines.add("BDAY:" + val);
-      lines.add("UID:" + contact.identifier());
     }
     lines.add("END:VCARD");
     return String.join("\r\n", lines);
