@@ -15,9 +15,7 @@ import codes.thischwa.bcg.service.CalUtil;
 import codes.thischwa.bcg.service.SardineInitializer;
 import com.github.sardine.DavResource;
 import com.github.sardine.Sardine;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -200,7 +198,10 @@ public abstract class AbstractBackendTest {
     List<DavResource> davResources = sardine.list(davConf.calUrl());
     Set<URI> calendarEntries = new HashSet<>();
     for (DavResource resource : davResources) {
-      if (CALENDAR_CONTENT_TYPE.equalsIgnoreCase(resource.getContentType())) {
+      if (resource.isDirectory()) {
+        continue;
+      }
+      if (resource.getContentType().startsWith(CALENDAR_CONTENT_TYPE)) {
         log.debug("Calendar found: name={}, display-name={}", resource.getName(),
             resource.getDisplayName());
         calendarEntries.add(resource.getHref());
