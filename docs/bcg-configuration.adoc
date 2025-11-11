@@ -29,7 +29,7 @@ event:
 
 dav:
   max-retries: 5
-  retry-delay-in-minutes: 1
+  retry-delay-in-seconds: 1
 ----
 
 Application settings:
@@ -52,8 +52,8 @@ The placeholders '&#126;first-name&#126;', '&#126;last-name&#126;' and '&#126;bi
 
 Dav settings:
 
-- `dav.delay-in-minutes`: This property determines the delay interval (in minutes) between retries in the case of network problems.
-- `dav.retry-delay-in-minutes`: The maximum number of retries due to network errors.
+- `dav.delay-in-seconds`: This property determines the delay interval (in seconds) between retries in the case of network problems.
+- `dav.retry-delay-in-seconds`: The maximum number of retries due to network errors.
 
 == Individual settings
 

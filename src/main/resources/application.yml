@@ -17,4 +17,4 @@ event:
 
 dav:
   max-retries: 5
-  retry-delay-in-minutes: 1
+  retry-delay-in-seconds: 10

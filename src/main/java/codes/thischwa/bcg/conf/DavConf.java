@@ -11,12 +11,12 @@ import org.springframework.web.util.UriComponentsBuilder;
  * @param password       The password for authentication.
  * @param calUrl         The URL for accessing calendar services.
  * @param cardUrl        The URL for accessing address book services.
- * @param retryDelayInMinutes The delay in minutes for scheduled tasks or updates.
+ * @param retryDelayInSeconds The delay in seconds for scheduled tasks or updates.
  * @param maxRetries The maximum number of trials for a specific operation.
  */
 @ConfigurationProperties(prefix = "dav")
 public record DavConf(
-    String user, String password, String calUrl, String cardUrl, Integer retryDelayInMinutes,
+    String user, String password, String calUrl, String cardUrl, Integer retryDelayInSeconds,
     Integer maxRetries) {
 
   /**
@@ -35,6 +35,6 @@ public record DavConf(
   }
 
   public long getRetryDelayInMillis() {
-    return retryDelayInMinutes * 60 * 1000;
+    return retryDelayInSeconds * 1000;
   }
 }

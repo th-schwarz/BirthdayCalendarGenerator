@@ -24,7 +24,7 @@ class DavConfTest extends AbstractTest {
         "https://dav.my-domain.org/SOGo/dav/dav-user/Contacts/personal/",
         davConf.cardUrl()
     );
-    assertEquals(1, davConf.retryDelayInMinutes());
+    assertEquals(10, davConf.retryDelayInSeconds());
     assertEquals(5, davConf.maxRetries());
   }
 
