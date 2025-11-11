@@ -5,9 +5,7 @@ import codes.thischwa.bcg.conf.BcgConf;
 import codes.thischwa.bcg.conf.DavConf;
 import codes.thischwa.bcg.conf.EventConf;
 import com.github.sardine.Sardine;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
@@ -199,9 +197,10 @@ public class CalHandler {
   private void uploadSingleEvent(Sardine sardine, Calendar calendar, Contact contact) throws IOException {
     String eventContent = calendar.toString();
     String eventUrl = davConf.calUrl() + contact.identifier() + ".ics";
-    try (InputStream inputStream = new ByteArrayInputStream(
-        eventContent.getBytes(StandardCharsets.UTF_8))) {
-      sardine.put(eventUrl, inputStream, CALENDAR_CONTENT_TYPE + "; CHARSET=UTF-8");
+    // Use byte[] upload to ensure Content-Length is set (some servers reject chunked) and send a minimal Content-Type
+    byte[] bytes = eventContent.getBytes(StandardCharsets.UTF_8);
+    try {
+      sardine.put(eventUrl, bytes, CALENDAR_CONTENT_TYPE);
       log.debug("Uploaded birthday event for '{}': {}\n{}", contact.getFullName(), eventUrl, eventContent);
     } catch (IOException e) {
       log.error("Failed to upload birthday event for '{}': {}\n{}", contact.getFullName(), eventUrl, eventContent, e);
