@@ -23,8 +23,10 @@ Features:
 * CardDAV/CalDAV integration
 * Intelligent event synchronization
 * Automated scheduling with cron
-* Docker support with prebuilt images
+* Docker support
 * Java 17+ compatible
+* Successful tested with SOGo, Baikal, Radicale +
+see below "Backend Tests"
 
 If you find a bug or certain features are missing, don’t hesitate to file an issue on https://github.com/th-schwarz/BirthdayCalendarGenerator/issues[Github].
 
@@ -41,25 +43,6 @@ Single backend tests:
 * image:https://github.com/th-schwarz/BirthdayCalendarGenerator/actions/workflows/backend-baikal.yml/badge.svg["GitHub CI Baikal Backend Tests",link="https://github.com/th-schwarz/BirthdayCalendarGenerator/actions/workflows/backend-baikal.yml"]
 * image:https://github.com/th-schwarz/BirthdayCalendarGenerator/actions/workflows/backend-sogo.yml/badge.svg["GitHub CI Sogo Backend Tests",link="https://github.com/th-schwarz/BirthdayCalendarGenerator/actions/workflows/backend-sogo.yml"]
 * image:https://github.com/th-schwarz/BirthdayCalendarGenerator/actions/workflows/backend-radicale.yml/badge.svg["GitHub CI Radicale Backend Tests",link="https://github.com/th-schwarz/BirthdayCalendarGenerator/actions/workflows/backend-radicale.yml"]
-
-== Changelog
-
-* v3.0.0 +
-Fixed an issue with reading birthday events for some dav backends e.g. Baikal.
-** issue #14 improve sync
-* v2.0.2
-** issue #10 Docker support: any plan to release an image or accept PRs for a Dockerfile + CI?
-** issue #12 The 'method' property for a calendar object causes an exception in Baikal
-* v2.0.1
-** issue #8 bcg terminates if the connection to the dav server fails
-** issue #9 default of bcg.run-on-start should be false
-* v2.0.0 +
-  issue #4 implement a sync +
-  instead of the Brute-Force-Approach
-* v1.2.0 +
-  issue #3 reminder for all birthday events
-* v1.1.0 +
-  issue #2: A remote event should only be deleted if its categories contain the defined birthday category.
 
 == Basic Workflow
 
