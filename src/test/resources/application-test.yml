@@ -20,4 +20,4 @@ dav:
   cal-url: https://dav.my-domain.org/SOGo/dav/dav-user/Calendar/46-12345678-5-87654321/
   card-url: https://dav.my-domain.org/SOGo/dav/dav-user/Contacts/personal/
   max-retries: 5
-  retry-delay-in-seconds: 10
+  retry-delay-in-seconds: 2
