@@ -21,11 +21,14 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @Testcontainers
 @Slf4j
 public class BaikalComposeTest extends AbstractBackendTest {
+
+  private static final String COMPOSE_DIR = System.getProperty("user.dir") + "/src/docker/baikal";
   private static String BASE_URL;
 
   @Container
   public static ComposeContainer baikal = new ComposeContainer(
-      new File("src/docker/baikal/docker-compose-test.yml"))
+      new File(COMPOSE_DIR + "/docker-compose-test.yml"))
+      .withLocalCompose(true)
       .withExposedService("baikal-it", 80, Wait.forHttp("/")
           .forStatusCode(200)
           .withStartupTimeout(Duration.ofSeconds(120)));

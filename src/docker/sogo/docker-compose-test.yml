@@ -1,0 +1,36 @@
+services:
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+    image: sogo-nginx-it:latest
+    ports:
+      - "80:80"
+    volumes:
+      - sogo-webresources:/usr/lib/GNUstep/SOGo/WebServerResources:ro
+    depends_on:
+      - sogo
+
+  sogo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: sogo-it:latest
+    platform: linux/amd64
+    volumes:
+      - sogo-webresources:/usr/lib/GNUstep/SOGo/WebServerResources
+    depends_on:
+      - mysql
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=sogo
+      - MYSQL_USER=sogo
+      - MYSQL_PASSWORD=sogo
+    volumes:
+      - ./config/init-users.sql:/docker-entrypoint-initdb.d/init-users.sql
+
+volumes:
+  sogo-webresources:
