@@ -36,6 +36,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
+      - name: Prepare Baikal directories
+        run: |
+          mkdir -p src/docker/baikal/config
+          mkdir -p src/docker/baikal/Specific
+          mkdir -p src/docker/baikal/db
+
       - name: Run Baikal Docker Tests
         run: mvn clean test -B -Dtest=BaikalComposeTest
         env:
