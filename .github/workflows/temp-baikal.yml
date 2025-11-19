@@ -11,7 +11,8 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -35,12 +36,6 @@ jobs:
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven-
-
-#      - name: Prepare Baikal directories
-#        run: |
-#          mkdir -p src/docker/baikal/config
-#          mkdir -p src/docker/baikal/Specific
-#          mkdir -p src/docker/baikal/db
 
       - name: Run Baikal Docker Tests
         run: mvn clean test -B -Dtest=BaikalComposeTest
