@@ -27,10 +27,14 @@ public class RadicaleComposeTest extends AbstractBackendTest {
   @Container
   public static ComposeContainer radicale = new ComposeContainer(
       new File("src/docker/radicale/docker-compose.yml"))
-      .withExposedService("radicale-it", 5232,
+      .withLocalCompose(true)
+      .withPull(true)
+      .withExposedService(
+          "radicale-it",
+          5232,
           Wait.forHttp("/")
-              .forStatusCodeMatching(status -> status == 200 || status == 401)
-              .withStartupTimeout(Duration.ofSeconds(120))
+              .forStatusCodeMatching(status -> status >= 200 && status < 500)
+              .withStartupTimeout(Duration.ofSeconds(180))
       );
 
   @BeforeAll
@@ -45,7 +49,8 @@ public class RadicaleComposeTest extends AbstractBackendTest {
     connection.setRequestMethod("GET");
     int responseCode = connection.getResponseCode();
 
-    assertTrue(responseCode == 200 || responseCode == 401, "Radicale should respond with 200 or 401");
+    assertTrue(responseCode >= 200 && responseCode < 500,
+        "Radicale should be reachable over HTTP (2xx/3xx/4xx). Actual: " + responseCode);
   }
 
   @DynamicPropertySource

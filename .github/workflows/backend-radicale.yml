@@ -19,6 +19,9 @@ jobs:
       - name: Verify Docker works
         run: docker version
 
+      - name: Verify Docker Compose works
+        run: docker compose version
+
       - name: Pull Radicale Docker image
         run: docker pull  ghcr.io/kozea/radicale:latest
 
@@ -39,5 +42,6 @@ jobs:
       - name: Run Radicale Docker Tests
         run: mvn clean test -B -Dtest=RadicaleComposeTest
         env:
-          TESTCONTAINERS_RYUK_DISABLED: true
+          # Allow Ryuk to manage container lifecycle in CI for reliability
+          TESTCONTAINERS_RYUK_DISABLED: "false"
           TESTCONTAINERS_LOG_LEVEL: DEBUG
