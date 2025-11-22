@@ -1,0 +1,11 @@
+services:
+  radicale-it:
+    image: ghcr.io/kozea/radicale:latest
+    # Do not bind host ports here; Testcontainers will map them dynamically.
+    expose:
+      - "5232"
+    environment:
+      - LOG_LEVEL=debug
+    volumes:
+      - ./config:/etc/radicale:ro
+      - ./data:/data
