@@ -27,9 +27,4 @@ jobs:
             ${{ runner.os }}-maven-
 
       - name: Run SOGo Tests
-        run: mvn clean test -B -Dtest=SogoTest
-        env:
-          SOGO_DAV_USER: ${{ secrets.SOGO_DAV_USER }}
-          SOGO_DAV_PASS: ${{ secrets.SOGO_DAV_PASS }}
-          SOGO_DAV_CARD_URL: ${{ secrets.SOGO_DAV_CARD_URL }}
-          SOGO_DAV_CAL_URL: ${{ secrets.SOGO_DAV_CAL_URL }}
+        run: mvn clean test -B -Dtest=SogoComposeTest
