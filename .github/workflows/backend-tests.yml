@@ -21,9 +21,6 @@ jobs:
       - name: Verify Docker works
         run: docker version
 
-      - name: Pull required Docker images
-        run: docker pull thschwarz/baikal-it:1.0
-
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -43,7 +40,3 @@ jobs:
         env:
           TESTCONTAINERS_RYUK_DISABLED: true
           TESTCONTAINERS_LOG_LEVEL: DEBUG
-          SOGO_DAV_USER: ${{ secrets.SOGO_DAV_USER }}
-          SOGO_DAV_PASS: ${{ secrets.SOGO_DAV_PASS }}
-          SOGO_DAV_CARD_URL: ${{ secrets.SOGO_DAV_CARD_URL }}
-          SOGO_DAV_CAL_URL: ${{ secrets.SOGO_DAV_CAL_URL }}
