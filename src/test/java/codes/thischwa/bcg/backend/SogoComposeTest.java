@@ -36,12 +36,10 @@ public class SogoComposeTest extends AbstractBackendTest {
           SERVICE_NAME,
           SERVICE_PORT,
           Wait.forHttp("/SOGo/")
+              .forPort(SERVICE_PORT)
               .forStatusCodeMatching(status -> status >= HttpStatus.SC_OK && status < 500)
               .withStartupTimeout(Duration.ofSeconds(STARTUP_TIMEOUT_SEC))
-      )
-      .waitingFor("sogo",
-          Wait.forLogMessage(".*Starting web server.*", 1)
-              .withStartupTimeout(Duration.ofSeconds(STARTUP_TIMEOUT_SEC)));
+      );
 
   @BeforeAll
   public static void testIsRunning() throws IOException, InterruptedException {
@@ -49,8 +47,6 @@ public class SogoComposeTest extends AbstractBackendTest {
     Integer port = sogo.getServicePort(SERVICE_NAME, SERVICE_PORT);
     BASE_URL = "http://" + host + ":" + port + "/";
     log.info("Base URL: {}", BASE_URL);
-    log.info("CardDAV URL will be: {}", BASE_URL + "SOGo/dav/dev-user/Contacts/personal/");
-    log.info("CalDAV URL will be: {}", BASE_URL + "SOGo/dav/dev-user/Calendar/personal/");
 
     // Give SOGo additional time to fully initialize
     log.info("Waiting additional 10 seconds for SOGo to fully initialize...");
