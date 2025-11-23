@@ -13,18 +13,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Verify Docker works
-        run: docker version
-
-      - name: Verify Docker Compose works
-        run: docker compose version
-
-      - name: Pull Radicale Docker image
-        run: docker pull  ghcr.io/kozea/radicale:latest
-
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -41,7 +29,3 @@ jobs:
 
       - name: Run Radicale Docker Tests
         run: mvn clean test -B -Dtest=RadicaleComposeTest
-        env:
-          # Allow Ryuk to manage container lifecycle in CI for reliability
-          TESTCONTAINERS_RYUK_DISABLED: "false"
-          TESTCONTAINERS_LOG_LEVEL: DEBUG
